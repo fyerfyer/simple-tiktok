@@ -1,0 +1,185 @@
+networks:
+  tiktok-net:
+    driver: bridge
+
+volumes:
+  mysql-master-data:
+  mysql-slave-data:
+  redis-data:
+  minio-data:
+  kafka-data:
+  zookeeper-data:
+  consul-data:
+
+services:
+  # 服务发现 - Consul
+  consul:
+    image: consul:1.15
+    container_name: tiktok-consul
+    ports:
+      - "8500:8500"
+    volumes:
+      - consul-data:/consul/data
+      - ./consul/consul.json:/consul/config/consul.json
+    command: consul agent -config-file=/consul/config/consul.json
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 消息队列 - Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: tiktok-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 消息队列 - Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: tiktok-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_NUM_PARTITIONS: 3
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - ./kafka/server.properties:/etc/kafka/server.properties
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 数据库 - MySQL主库
+  mysql-master:
+    image: mysql:8.0
+    container_name: tiktok-mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: tiktok123
+      MYSQL_DATABASE: tiktok
+      MYSQL_USER: tiktok
+      MYSQL_PASSWORD: tiktok123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-master-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --server-id=1 --log-bin=mysql-bin --binlog-do-db=tiktok
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 数据库 - MySQL从库
+  mysql-slave:
+    image: mysql:8.0
+    container_name: tiktok-mysql-slave
+    environment:
+      MYSQL_ROOT_PASSWORD: tiktok123
+      MYSQL_DATABASE: tiktok
+      MYSQL_USER: tiktok
+      MYSQL_PASSWORD: tiktok123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-slave-data:/var/lib/mysql
+    command: --server-id=2 --relay-log=relay-log --read-only=1
+    depends_on:
+      - mysql-master
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 缓存 - Redis主节点
+  redis-master:
+    image: redis:7-alpine
+    container_name: tiktok-redis-master
+    ports:
+      - "6380:6379"  # 修改外部端口
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 缓存 - Redis从节点1
+  redis-slave1:
+    image: redis:7-alpine
+    container_name: tiktok-redis-slave1
+    ports:
+      - "6381:6379"
+    command: redis-server --slaveof redis-master 6379 --appendonly yes
+    depends_on:
+      - redis-master
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 缓存 - Redis从节点2
+  redis-slave2:
+    image: redis:7-alpine
+    container_name: tiktok-redis-slave2
+    ports:
+      - "6382:6379"  # 修改端口避免冲突
+    command: redis-server --slaveof redis-master 6379 --appendonly yes
+    depends_on:
+      - redis-master
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 对象存储 - MinIO
+  minio:
+    image: minio/minio:latest
+    container_name: tiktok-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 监控 - Prometheus 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tiktok-prometheus
+    ports:
+      - "9091:9090"  # 修改外部端口
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - tiktok-net
+    restart: unless-stopped
+
+  # 监控 - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tiktok-grafana
+    ports:
+      - "3001:3000"  # 修改外部端口
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    networks:
+      - tiktok-net
+    restart: unless-stopped

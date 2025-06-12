@@ -1,0 +1,57 @@
+{
+  "datacenter": "dc1",
+  "data_dir": "/consul/data",
+  "log_level": "INFO",
+  "server": true,
+  "bootstrap_expect": 1,
+  "bind_addr": "0.0.0.0",
+  "client_addr": "0.0.0.0",
+  "retry_join": ["consul"],
+  "ui_config": {
+    "enabled": true
+  },
+  "connect": {
+    "enabled": true
+  },
+  "ports": {
+    "grpc": 8502
+  },
+  "services": [
+    {
+      "name": "mysql-master",
+      "port": 3306,
+      "address": "mysql-master",
+      "check": {
+        "tcp": "mysql-master:3306",
+        "interval": "10s"
+      }
+    },
+    {
+      "name": "redis-master",
+      "port": 6379,
+      "address": "redis-master",
+      "check": {
+        "tcp": "redis-master:6379",
+        "interval": "10s"
+      }
+    },
+    {
+      "name": "kafka",
+      "port": 9092,
+      "address": "kafka",
+      "check": {
+        "tcp": "kafka:9092",
+        "interval": "10s"
+      }
+    },
+    {
+      "name": "minio",
+      "port": 9000,
+      "address": "minio",
+      "check": {
+        "http": "http://minio:9000/minio/health/live",
+        "interval": "10s"
+      }
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "github.com/fyerfyer/tiktok-demo/api/common/v1;v1";
+
+// 通用响应结构
+message BaseResponse {
+  int32 status_code = 1;    // 状态码，0成功
+  string status_msg = 2;    // 状态信息
+}
+
+// 分页请求
+message PageRequest {
+  int32 page = 1;          // 页码，从1开始
+  int32 size = 2;          // 每页数量
+}
+
+// 分页响应
+message PageResponse {
+  int64 total = 1;         // 总数
+  bool has_more = 2;       // 是否有更多
+}
+
+// 用户信息
+message User {
+  int64 id = 1;
+  string name = 2;
+  int64 follow_count = 3;
+  int64 follower_count = 4;
+  bool is_follow = 5;
+  string avatar = 6;
+  string background_image = 7;
+  string signature = 8;
+  int64 total_favorited = 9;
+  int64 work_count = 10;
+  int64 favorite_count = 11;
+}
+
+// 视频信息
+message Video {
+  int64 id = 1;
+  User author = 2;
+  string play_url = 3;
+  string cover_url = 4;
+  int64 favorite_count = 5;
+  int64 comment_count = 6;
+  bool is_favorite = 7;
+  string title = 8;
+  int64 created_at = 9;
+}
+
+// 评论信息
+message Comment {
+  int64 id = 1;
+  User user = 2;
+  string content = 3;
+  string create_date = 4;
+  int64 like_count = 5;
+  int64 reply_count = 6;
+}
+
+// 消息信息
+message Message {
+  int64 id = 1;
+  int64 to_user_id = 2;
+  int64 from_user_id = 3;
+  string content = 4;
+  int64 create_time = 5;
+}
+
+// Token信息
+message TokenInfo {
+  int64 user_id = 1;
+  string username = 2;
+  int64 expire_time = 3;
+}
+
+// 文件信息
+message FileInfo {
+  string filename = 1;
+  int64 size = 2;
+  string content_type = 3;
+  string url = 4;
+}
+
+// 操作类型枚举
+enum ActionType {
+  ACTION_UNKNOWN = 0;
+  ACTION_LIKE = 1;        // 点赞
+  ACTION_UNLIKE = 2;      // 取消点赞
+  ACTION_FOLLOW = 3;      // 关注
+  ACTION_UNFOLLOW = 4;    // 取消关注
+  ACTION_COMMENT = 5;     // 评论
+  ACTION_DELETE = 6;      // 删除
+  ACTION_SEND = 7;        // 发送
+}
+
+// 状态枚举
+enum Status {
+  STATUS_UNKNOWN = 0;
+  STATUS_ACTIVE = 1;      // 正常
+  STATUS_INACTIVE = 2;    // 禁用
+  STATUS_DELETED = 3;     // 删除
+}
+
+// 视频状态枚举
+enum VideoStatus {
+  VIDEO_UNKNOWN = 0;
+  VIDEO_PUBLISHED = 1;    // 已发布
+  VIDEO_PRIVATE = 2;      // 私密
+  VIDEO_PROCESSING = 3;   // 处理中
+  VIDEO_FAILED = 4;       // 处理失败
+}
+
+// 消息类型枚举
+enum MessageType {
+  MESSAGE_UNKNOWN = 0;
+  MESSAGE_TEXT = 1;       // 文本消息
+  MESSAGE_IMAGE = 2;      // 图片消息
+  MESSAGE_VIDEO = 3;      // 视频消息
+}
+
+// 错误码常量
+enum ErrorCode {
+  SUCCESS = 0;
+  
+  // 通用错误 10xxx
+  PARAM_ERROR = 10001;
+  TOKEN_INVALID = 10002;
+  TOKEN_EXPIRED = 10003;
+  PERMISSION_DENIED = 10004;
+  RATE_LIMIT = 10005;
+  SERVER_ERROR = 50000;
+  
+  // 用户错误 20xxx
+  USER_NOT_EXIST = 20001;
+  USER_EXIST = 20002;
+  PASSWORD_ERROR = 20003;
+  REGISTER_FAILED = 20004;
+  
+  // 视频错误 30xxx
+  VIDEO_NOT_EXIST = 30001;
+  VIDEO_UPLOAD_FAIL = 30002;
+  VIDEO_FORMAT_ERR = 30003;
+  VIDEO_SIZE_ERR = 30004;
+  
+  // 社交错误 40xxx
+  ALREADY_FOLLOW = 40001;
+  NOT_FOLLOW = 40002;
+  ALREADY_LIKE = 40003;
+  NOT_LIKE = 40004;
+  COMMENT_NOT_EXIST = 40005;
+}
