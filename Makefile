@@ -51,6 +51,9 @@ logs-minio:
 logs-consul:
 	docker-compose -f deployments/docker-compose.yml logs -f consul
 
+logs-go-backend:
+	docker-compose -f deployments/docker-compose.yml logs -f go-backend
+
 # Clean Docker resources
 clean:
 	@echo "Cleaning Docker resources..."
@@ -75,6 +78,12 @@ health:
 	@curl -s http://localhost:8500/v1/status/leader >/dev/null && echo "✓ Consul OK" || echo "✗ Consul Failed"
 	@echo "Kafka: "
 	@docker exec tiktok-kafka kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1 && echo "✓ Kafka OK" || echo "✗ Kafka Failed"
+	@echo "Go Backend HTTP: "
+	@curl -s http://localhost:8000/health >/dev/null && echo "✓ Go Backend HTTP OK" || echo "✗ Go Backend HTTP Failed"
+	@echo "Go Backend gRPC: "
+	@docker exec tiktok-go-backend grpcurl -plaintext localhost:9000 list >/dev/null 2>&1 && echo "✓ Go Backend gRPC OK" || echo "✗ Go Backend gRPC Failed"
+	@echo "Go Backend Container: "
+	@docker ps --filter "name=tiktok-go-backend" --filter "status=running" --format "{{.Names}}" | grep -q "tiktok-go-backend" && echo "✓ Go Backend Container OK" || echo "✗ Go Backend Container Failed"
 
 # Initialize development environment
 init:
