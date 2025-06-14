@@ -7,13 +7,17 @@
 package main
 
 import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/google/wire"
 	"go-backend/internal/biz"
 	"go-backend/internal/conf"
 	"go-backend/internal/data"
+	"go-backend/internal/middleware"
 	"go-backend/internal/server"
 	"go-backend/internal/service"
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
+	"go-backend/pkg/auth"
+	"go-backend/pkg/utils"
 )
 
 import (
@@ -23,18 +27,55 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, bootstrap *conf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
 	dataData, cleanup, err := data.NewData(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
-	greeterRepo := data.NewGreeterRepo(dataData, logger)
-	greeterUsecase := biz.NewGreeterUsecase(greeterRepo, logger)
-	greeterService := service.NewGreeterService(greeterUsecase)
-	grpcServer := server.NewGRPCServer(confServer, greeterService, logger)
-	httpServer := server.NewHTTPServer(confServer, greeterService, logger)
+	userRepo := data.NewUserRepo(dataData, logger)
+	userUsecase := biz.NewUserUsecase(userRepo, logger)
+	relationRepo := data.NewRelationRepo(dataData, logger)
+	relationUsecase := biz.NewRelationUsecase(relationRepo, logger)
+	jwtManager := newJWTManager(bootstrap)
+	validator := newValidator()
+	userService := service.NewUserService(userUsecase, relationUsecase, jwtManager, validator, logger)
+	authMiddleware := newAuthMiddleware(jwtManager)
+	grpcServer := server.NewGRPCServer(confServer, userService, authMiddleware, logger)
+	httpServer := server.NewHTTPServer(confServer, userService, authMiddleware, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()
 	}, nil
+}
+
+// wire.go:
+
+// ProviderSet is providers.
+var ProviderSet = wire.NewSet(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, newJWTManager,
+	newPasswordManager,
+	newValidator,
+	newAuthMiddleware,
+)
+
+// newJWTManager JWT manager provider
+func newJWTManager(bc *conf.Bootstrap) *auth.JWTManager {
+	return auth.NewJWTManager(
+		bc.Jwt.Secret,
+		bc.Jwt.ExpireTime.AsDuration(),
+	)
+}
+
+// newPasswordManager password manager provider
+func newPasswordManager() *auth.PasswordManager {
+	return auth.NewPasswordManager()
+}
+
+// newValidator param validator provider
+func newValidator() *utils.Validator {
+	return utils.NewValidator()
+}
+
+// newAuthMiddleware auth middleware provider
+func newAuthMiddleware(jwtManager *auth.JWTManager) *middleware.AuthMiddleware {
+	return middleware.NewAuthMiddleware(jwtManager)
 }

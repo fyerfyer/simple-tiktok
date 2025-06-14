@@ -1158,7 +1158,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"NOT_FOLLOW\x10¸\x02\x12\x12\n" +
 	"\fALREADY_LIKE\x10ø\x02\x12\x0e\n" +
 	"\bNOT_LIKE\x10ĸ\x02\x12\x17\n" +
-	"\x11COMMENT_NOT_EXIST\x10Ÿ\x02B2Z0github.com/fyerfyer/tiktok-demo/api/common/v1;v1b\x06proto3"
+	"\x11COMMENT_NOT_EXIST\x10Ÿ\x02B\x1dZ\x1bgo-backend/api/common/v1;v1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once

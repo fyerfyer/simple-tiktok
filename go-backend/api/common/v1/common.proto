@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package common.v1;
 
-option go_package = "github.com/fyerfyer/tiktok-demo/api/common/v1;v1";
+option go_package = "go-backend/api/common/v1;v1";
 
 // 通用响应结构
 message BaseResponse {

@@ -12,18 +12,33 @@ CREATE TABLE `users` (
   `password_hash` varchar(128) NOT NULL COMMENT 'Password hash',
   `salt` varchar(32) NOT NULL COMMENT 'Password salt',
   `nickname` varchar(50) DEFAULT NULL COMMENT 'Display name',
-  `avatar` varchar(255) DEFAULT NULL COMMENT 'Avatar URL',
-  `background_image` varchar(255) DEFAULT NULL COMMENT 'Background image URL',
-  `signature` varchar(200) DEFAULT NULL COMMENT 'User signature',
+  `avatar` varchar(255) DEFAULT 'https://example.com/default-avatar.jpg' COMMENT 'Avatar URL',
+  `background_image` varchar(255) DEFAULT 'https://example.com/default-bg.jpg' COMMENT 'Background image URL',
+  `signature` varchar(200) DEFAULT '' COMMENT 'User signature',
   `follow_count` int DEFAULT '0' COMMENT 'Following count',
   `follower_count` int DEFAULT '0' COMMENT 'Follower count',
   `total_favorited` bigint DEFAULT '0' COMMENT 'Total likes received',
   `work_count` int DEFAULT '0' COMMENT 'Video count',
   `favorite_count` int DEFAULT '0' COMMENT 'Liked video count',
+  `status` tinyint DEFAULT '1' COMMENT 'User status: 1-active, 2-inactive',
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 关注关系表
+CREATE TABLE `user_follows` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT 'Follower user ID',
+  `follow_user_id` bigint NOT NULL COMMENT 'Following user ID',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_follow` (`user_id`,`follow_user_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_follow_user_id` (`follow_user_id`),
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -44,18 +59,6 @@ CREATE TABLE `videos` (
   KEY `idx_author_created` (`author_id`,`created_at` DESC),
   KEY `idx_created_at` (`created_at` DESC),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 关注关系表
-CREATE TABLE `user_follows` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL COMMENT 'Follower user ID',
-  `follow_user_id` bigint NOT NULL COMMENT 'Following user ID',
-  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_follow` (`user_id`,`follow_user_id`),
-  KEY `idx_user_id` (`user_id`),
-  KEY `idx_follow_user_id` (`follow_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 点赞表
@@ -103,8 +106,8 @@ CREATE TABLE `messages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 插入测试数据
-INSERT INTO `users` (`username`, `password_hash`, `salt`, `nickname`, `avatar`) VALUES
-('testuser1', 'hash1', 'salt1', '测试用户1', 'https://example.com/avatar1.jpg'),
-('testuser2', 'hash2', 'salt2', '测试用户2', 'https://example.com/avatar2.jpg');
+INSERT INTO `users` (`username`, `password_hash`, `salt`, `nickname`) VALUES
+('testuser1', 'hash1', 'salt1', '测试用户1'),
+('testuser2', 'hash2', 'salt2', '测试用户2');
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,0 +1,245 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "go-backend/api/user/v1;v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "common/v1/common.proto";
+
+// 用户服务
+service UserService {
+  // 用户注册
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/douyin/user/register"
+      body: "*"
+    };
+  }
+  
+  // 用户登录
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/douyin/user/login"
+      body: "*"
+    };
+  }
+  
+  // 获取用户信息
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/douyin/user"
+    };
+  }
+  
+  // 关注操作
+  rpc RelationAction(RelationActionRequest) returns (RelationActionResponse) {
+    option (google.api.http) = {
+      post: "/douyin/relation/action"
+    };
+  }
+  
+  // 获取关注列表
+  rpc GetFollowList(GetFollowListRequest) returns (GetFollowListResponse) {
+    option (google.api.http) = {
+      get: "/douyin/relation/follow/list"
+    };
+  }
+  
+  // 获取粉丝列表
+  rpc GetFollowerList(GetFollowerListRequest) returns (GetFollowerListResponse) {
+    option (google.api.http) = {
+      get: "/douyin/relation/follower/list"
+    };
+  }
+  
+  // 获取好友列表
+  rpc GetFriendList(GetFriendListRequest) returns (GetFriendListResponse) {
+    option (google.api.http) = {
+      get: "/douyin/relation/friend/list"
+    };
+  }
+  
+  // gRPC内部调用接口
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+  rpc GetUsersInfo(GetUsersInfoRequest) returns (GetUsersInfoResponse);
+  rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
+  rpc UpdateUserStats(UpdateUserStatsRequest) returns (google.protobuf.Empty);
+}
+
+// 用户注册请求
+message RegisterRequest {
+  string username = 1;  // 用户名
+  string password = 2;  // 密码
+}
+
+// 用户注册响应
+message RegisterResponse {
+  common.v1.BaseResponse base = 1;
+  RegisterData data = 2;
+}
+
+message RegisterData {
+  int64 user_id = 1;   // 用户ID
+  string token = 2;    // JWT Token
+}
+
+// 用户登录请求
+message LoginRequest {
+  string username = 1;  // 用户名
+  string password = 2;  // 密码
+}
+
+// 用户登录响应
+message LoginResponse {
+  common.v1.BaseResponse base = 1;
+  LoginData data = 2;
+}
+
+message LoginData {
+  int64 user_id = 1;   // 用户ID
+  string token = 2;    // JWT Token
+}
+
+// 获取用户信息请求
+message GetUserRequest {
+  int64 user_id = 1;   // 用户ID
+  string token = 2;    // Token
+}
+
+// 获取用户信息响应
+message GetUserResponse {
+  common.v1.BaseResponse base = 1;
+  GetUserData data = 2;
+}
+
+message GetUserData {
+  common.v1.User user = 1;  // 用户信息
+}
+
+// 关注操作请求
+message RelationActionRequest {
+  string token = 1;          // Token
+  int64 to_user_id = 2;      // 对方用户ID
+  int32 action_type = 3;     // 1关注，2取消关注
+}
+
+// 关注操作响应
+message RelationActionResponse {
+  common.v1.BaseResponse base = 1;
+}
+
+// 获取关注列表请求
+message GetFollowListRequest {
+  int64 user_id = 1;   // 用户ID
+  string token = 2;    // Token
+}
+
+// 获取关注列表响应
+message GetFollowListResponse {
+  common.v1.BaseResponse base = 1;
+  GetFollowListData data = 2;
+}
+
+message GetFollowListData {
+  repeated common.v1.User user_list = 1;  // 关注用户列表
+}
+
+// 获取粉丝列表请求
+message GetFollowerListRequest {
+  int64 user_id = 1;   // 用户ID
+  string token = 2;    // Token
+}
+
+// 获取粉丝列表响应
+message GetFollowerListResponse {
+  common.v1.BaseResponse base = 1;
+  GetFollowerListData data = 2;
+}
+
+message GetFollowerListData {
+  repeated common.v1.User user_list = 1;  // 粉丝用户列表
+}
+
+// 获取好友列表请求
+message GetFriendListRequest {
+  int64 user_id = 1;   // 用户ID
+  string token = 2;    // Token
+}
+
+// 获取好友列表响应
+message GetFriendListResponse {
+  common.v1.BaseResponse base = 1;
+  GetFriendListData data = 2;
+}
+
+message GetFriendListData {
+  repeated FriendUser user_list = 1;  // 好友列表
+}
+
+// 好友用户信息(包含最新消息)
+message FriendUser {
+  int64 id = 1;
+  string name = 2;
+  int64 follow_count = 3;
+  int64 follower_count = 4;
+  bool is_follow = 5;
+  string avatar = 6;
+  string background_image = 7;
+  string signature = 8;
+  int64 total_favorited = 9;
+  int64 work_count = 10;
+  int64 favorite_count = 11;
+  string message = 12;     // 最新消息内容
+  int64 msg_type = 13;     // 消息类型
+}
+
+// gRPC内部调用 - 获取用户信息请求
+message GetUserInfoRequest {
+  int64 user_id = 1;
+}
+
+// gRPC内部调用 - 获取用户信息响应
+message GetUserInfoResponse {
+  common.v1.User user = 1;
+}
+
+// gRPC内部调用 - 批量获取用户信息请求
+message GetUsersInfoRequest {
+  repeated int64 user_ids = 1;
+}
+
+// gRPC内部调用 - 批量获取用户信息响应
+message GetUsersInfoResponse {
+  repeated common.v1.User users = 1;
+}
+
+// gRPC内部调用 - 验证Token请求
+message VerifyTokenRequest {
+  string token = 1;
+}
+
+// gRPC内部调用 - 验证Token响应
+message VerifyTokenResponse {
+  bool valid = 1;
+  int64 user_id = 2;
+  string username = 3;
+}
+
+// gRPC内部调用 - 更新用户统计请求
+message UpdateUserStatsRequest {
+  int64 user_id = 1;
+  UpdateStatsType type = 2;
+  int64 count = 3;  // 变化数量，可为负数
+}
+
+// 统计更新类型
+enum UpdateStatsType {
+  UPDATE_STATS_UNKNOWN = 0;
+  UPDATE_STATS_FOLLOW_COUNT = 1;      // 关注数
+  UPDATE_STATS_FOLLOWER_COUNT = 2;    // 粉丝数
+  UPDATE_STATS_WORK_COUNT = 3;        // 作品数
+  UPDATE_STATS_FAVORITE_COUNT = 4;    // 喜欢数
+  UPDATE_STATS_TOTAL_FAVORITED = 5;   // 获赞数
+}

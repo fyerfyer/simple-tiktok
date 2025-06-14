@@ -22,110 +22,15 @@ data:
     read_timeout: 0.2s
     write_timeout: 0.2s
     pool_size: 100
-    
-  kafka:
-    brokers:
-      - kafka:29092
-    producer:
-      batch_size: 16384
-      linger_ms: 10
-      retry_max: 3
-    consumer:
-      group_id: tiktok-group
-      auto_commit: true
-      
-  minio:
-    endpoint: minio:9000
-    access_key: minioadmin
-    secret_key: minioadmin123
-    bucket: tiktok-videos
-    use_ssl: false
-
-consul:
-  addr: consul:8500
-  scheme: http
 
 jwt:
   secret: tiktok-jwt-secret-key-2024
-  expire_time: 168h    # 7天
-  refresh_expire_time: 720h    # 30天
-
-upload:
-  max_file_size: 104857600    # 100MB
-  allowed_types:
-    - video/mp4
-    - video/avi
-    - video/mov
-  video_bucket: tiktok-videos
-  image_bucket: tiktok-images
-
-rate_limit:
-  global:
-    rate: 1000
-    burst: 2000
-  user:
-    auth_rate: 10      # 认证相关API每分钟限制
-    upload_rate: 5     # 上传API每分钟限制
-    social_rate: 60    # 社交API每分钟限制
-
-log:
-  level: info
-  format: json
-  output: stdout
-
-trace:
-  endpoint: http://jaeger:14268/api/traces
-
-metrics:
-  addr: :9090
-  path: /metrics
-
-security:
-  cors:
-    allow_origins:
-      - "*"
-    allow_methods:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - OPTIONS
-    allow_headers:
-      - "*"
-    allow_credentials: true
-    max_age: 86400
-
-cache:
-  default_expire: 3600s    # 1小时
-  user_expire: 1800s       # 30分钟
-  video_expire: 7200s      # 2小时
-  hot_expire: 300s         # 5分钟
-
-recommend:
-  default_size: 30
-  max_size: 50
-  refresh_threshold: 0.3
-  hot_video_count: 100
-  user_behavior_expire: 2592000s    # 30天
-
-message:
-  max_content_length: 500
-  history_limit: 100
-
-pagination:
-  default_size: 20
-  max_size: 50
+  expire_time: 604800s
 
 business:
-  video:
-    transcode_timeout: 300s
-    cover_timeout: 30s
   user:
     password_salt_length: 32
     username_min_length: 3
     username_max_length: 32
     password_min_length: 6
     password_max_length: 20
-  comment:
-    max_content_length: 200
-    max_reply_level: 2

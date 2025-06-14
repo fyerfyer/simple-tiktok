@@ -3,8 +3,339 @@
 
 openapi: 3.0.3
 info:
-    title: ""
+    title: UserService API
+    description: 用户服务
     version: 0.0.1
-paths: {}
+paths:
+    /douyin/relation/action:
+        post:
+            tags:
+                - UserService
+            description: 关注操作
+            operationId: UserService_RelationAction
+            parameters:
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+                - name: toUserId
+                  in: query
+                  schema:
+                    type: string
+                - name: actionType
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.RelationActionResponse'
+    /douyin/relation/follow/list:
+        get:
+            tags:
+                - UserService
+            description: 获取关注列表
+            operationId: UserService_GetFollowList
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.GetFollowListResponse'
+    /douyin/relation/follower/list:
+        get:
+            tags:
+                - UserService
+            description: 获取粉丝列表
+            operationId: UserService_GetFollowerList
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.GetFollowerListResponse'
+    /douyin/relation/friend/list:
+        get:
+            tags:
+                - UserService
+            description: 获取好友列表
+            operationId: UserService_GetFriendList
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.GetFriendListResponse'
+    /douyin/user:
+        get:
+            tags:
+                - UserService
+            description: 获取用户信息
+            operationId: UserService_GetUser
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.GetUserResponse'
+    /douyin/user/login:
+        post:
+            tags:
+                - UserService
+            description: 用户登录
+            operationId: UserService_Login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.v1.LoginRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.LoginResponse'
+    /douyin/user/register:
+        post:
+            tags:
+                - UserService
+            description: 用户注册
+            operationId: UserService_Register
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.v1.RegisterRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.v1.RegisterResponse'
 components:
-    schemas: {}
+    schemas:
+        common.v1.BaseResponse:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+            description: 通用响应结构
+        common.v1.User:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                followCount:
+                    type: string
+                followerCount:
+                    type: string
+                isFollow:
+                    type: boolean
+                avatar:
+                    type: string
+                backgroundImage:
+                    type: string
+                signature:
+                    type: string
+                totalFavorited:
+                    type: string
+                workCount:
+                    type: string
+                favoriteCount:
+                    type: string
+            description: 用户信息
+        user.v1.FriendUser:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                followCount:
+                    type: string
+                followerCount:
+                    type: string
+                isFollow:
+                    type: boolean
+                avatar:
+                    type: string
+                backgroundImage:
+                    type: string
+                signature:
+                    type: string
+                totalFavorited:
+                    type: string
+                workCount:
+                    type: string
+                favoriteCount:
+                    type: string
+                message:
+                    type: string
+                msgType:
+                    type: string
+            description: 好友用户信息(包含最新消息)
+        user.v1.GetFollowListData:
+            type: object
+            properties:
+                userList:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/common.v1.User'
+        user.v1.GetFollowListResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/user.v1.GetFollowListData'
+            description: 获取关注列表响应
+        user.v1.GetFollowerListData:
+            type: object
+            properties:
+                userList:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/common.v1.User'
+        user.v1.GetFollowerListResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/user.v1.GetFollowerListData'
+            description: 获取粉丝列表响应
+        user.v1.GetFriendListData:
+            type: object
+            properties:
+                userList:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/user.v1.FriendUser'
+        user.v1.GetFriendListResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/user.v1.GetFriendListData'
+            description: 获取好友列表响应
+        user.v1.GetUserData:
+            type: object
+            properties:
+                user:
+                    $ref: '#/components/schemas/common.v1.User'
+        user.v1.GetUserResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/user.v1.GetUserData'
+            description: 获取用户信息响应
+        user.v1.LoginData:
+            type: object
+            properties:
+                userId:
+                    type: string
+                token:
+                    type: string
+        user.v1.LoginRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+            description: 用户登录请求
+        user.v1.LoginResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/user.v1.LoginData'
+            description: 用户登录响应
+        user.v1.RegisterData:
+            type: object
+            properties:
+                userId:
+                    type: string
+                token:
+                    type: string
+        user.v1.RegisterRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+            description: 用户注册请求
+        user.v1.RegisterResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/user.v1.RegisterData'
+            description: 用户注册响应
+        user.v1.RelationActionResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+            description: 关注操作响应
+tags:
+    - name: UserService

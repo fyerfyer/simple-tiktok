@@ -8,6 +8,8 @@ import "google/protobuf/duration.proto";
 message Bootstrap {
   Server server = 1;
   Data data = 2;
+  JWT jwt = 3;
+  Business business = 4;
 }
 
 message Server {
@@ -29,13 +31,35 @@ message Data {
   message Database {
     string driver = 1;
     string source = 2;
+    int32 max_idle_conns = 3;
+    int32 max_open_conns = 4;
+    google.protobuf.Duration conn_max_lifetime = 5;
   }
   message Redis {
-    string network = 1;
-    string addr = 2;
-    google.protobuf.Duration read_timeout = 3;
-    google.protobuf.Duration write_timeout = 4;
+    string addr = 1;
+    string password = 2;
+    int32 db = 3;
+    google.protobuf.Duration dial_timeout = 4;
+    google.protobuf.Duration read_timeout = 5;
+    google.protobuf.Duration write_timeout = 6;
+    int32 pool_size = 7;
   }
   Database database = 1;
   Redis redis = 2;
+}
+
+message JWT {
+  string secret = 1;
+  google.protobuf.Duration expire_time = 2;
+}
+
+message Business {
+  message User {
+    int32 password_salt_length = 1;
+    int32 username_min_length = 2;
+    int32 username_max_length = 3;
+    int32 password_min_length = 4;
+    int32 password_max_length = 5;
+  }
+  User user = 1;
 }
