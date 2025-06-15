@@ -1697,12 +1697,12 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x1bUPDATE_STATS_FOLLOWER_COUNT\x10\x02\x12\x1b\n" +
 	"\x17UPDATE_STATS_WORK_COUNT\x10\x03\x12\x1f\n" +
 	"\x1bUPDATE_STATS_FAVORITE_COUNT\x10\x04\x12 \n" +
-	"\x1cUPDATE_STATS_TOTAL_FAVORITED\x10\x052\xa6\b\n" +
+	"\x1cUPDATE_STATS_TOTAL_FAVORITED\x10\x052\xa9\b\n" +
 	"\vUserService\x12a\n" +
 	"\bRegister\x12\x18.user.v1.RegisterRequest\x1a\x19.user.v1.RegisterResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/douyin/user/register\x12U\n" +
 	"\x05Login\x12\x15.user.v1.LoginRequest\x1a\x16.user.v1.LoginResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/douyin/user/login\x12R\n" +
-	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/douyin/user\x12r\n" +
-	"\x0eRelationAction\x12\x1e.user.v1.RelationActionRequest\x1a\x1f.user.v1.RelationActionResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\"\x17/douyin/relation/action\x12t\n" +
+	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/douyin/user\x12u\n" +
+	"\x0eRelationAction\x12\x1e.user.v1.RelationActionRequest\x1a\x1f.user.v1.RelationActionResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/douyin/relation/action\x12t\n" +
 	"\rGetFollowList\x12\x1d.user.v1.GetFollowListRequest\x1a\x1e.user.v1.GetFollowListResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/douyin/relation/follow/list\x12|\n" +
 	"\x0fGetFollowerList\x12\x1f.user.v1.GetFollowerListRequest\x1a .user.v1.GetFollowerListResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/douyin/relation/follower/list\x12t\n" +
 	"\rGetFriendList\x12\x1d.user.v1.GetFriendListRequest\x1a\x1e.user.v1.GetFriendListResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/douyin/relation/friend/list\x12H\n" +

@@ -8,7 +8,7 @@ import (
 	"go-backend/internal/biz"
 	"go-backend/internal/middleware"
 	"go-backend/pkg/auth"
-	"go-backend/pkg/utils"
+	"go-backend/pkg/security"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -18,27 +18,33 @@ import (
 type UserService struct {
 	v1.UnimplementedUserServiceServer
 
-	userUc     *biz.UserUsecase
-	relationUc *biz.RelationUsecase
-	jwtManager *auth.JWTManager
-	validator  *utils.Validator
-	log        *log.Helper
+	userUc       *biz.UserUsecase
+	relationUc   *biz.RelationUsecase
+	authUc       *biz.AuthUsecase
+	permissionUc *biz.PermissionUsecase
+	jwtManager   *auth.JWTManager
+	validator    *security.Validator
+	log          *log.Helper
 }
 
 // NewUserService new a user service.
 func NewUserService(
 	userUc *biz.UserUsecase,
 	relationUc *biz.RelationUsecase,
+	authUc *biz.AuthUsecase,
+	permissionUc *biz.PermissionUsecase,
 	jwtManager *auth.JWTManager,
-	validator *utils.Validator,
+	validator *security.Validator,
 	logger log.Logger,
 ) *UserService {
 	return &UserService{
-		userUc:     userUc,
-		relationUc: relationUc,
-		jwtManager: jwtManager,
-		validator:  validator,
-		log:        log.NewHelper(logger),
+		userUc:       userUc,
+		relationUc:   relationUc,
+		authUc:       authUc,
+		permissionUc: permissionUc,
+		jwtManager:   jwtManager,
+		validator:    validator,
+		log:          log.NewHelper(logger),
 	}
 }
 
@@ -49,7 +55,7 @@ func (s *UserService) Register(ctx context.Context, req *v1.RegisterRequest) (*v
 		return &v1.RegisterResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid username",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -58,7 +64,7 @@ func (s *UserService) Register(ctx context.Context, req *v1.RegisterRequest) (*v
 		return &v1.RegisterResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid password",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -83,8 +89,8 @@ func (s *UserService) Register(ctx context.Context, req *v1.RegisterRequest) (*v
 		}, nil
 	}
 
-	// 生成Token
-	token, err := s.jwtManager.GenerateToken(user.ID, user.Username)
+	// 生成Token对
+	tokenPair, err := s.jwtManager.GenerateTokenPair(user.ID, user.Username)
 	if err != nil {
 		s.log.WithContext(ctx).Errorf("generate token failed: %v", err)
 		return &v1.RegisterResponse{
@@ -95,6 +101,11 @@ func (s *UserService) Register(ctx context.Context, req *v1.RegisterRequest) (*v
 		}, nil
 	}
 
+	// 为新用户分配默认角色
+	if err := s.permissionUc.InitUserDefaultRole(ctx, user.ID); err != nil {
+		s.log.WithContext(ctx).Errorf("init user default role failed: %v", err)
+	}
+
 	return &v1.RegisterResponse{
 		Base: &commonv1.BaseResponse{
 			StatusCode: 0,
@@ -102,7 +113,7 @@ func (s *UserService) Register(ctx context.Context, req *v1.RegisterRequest) (*v
 		},
 		Data: &v1.RegisterData{
 			UserId: user.ID,
-			Token:  token,
+			Token:  tokenPair.AccessToken,
 		},
 	}, nil
 }
@@ -119,8 +130,8 @@ func (s *UserService) Login(ctx context.Context, req *v1.LoginRequest) (*v1.Logi
 		}, nil
 	}
 
-	// 用户登录
-	user, err := s.userUc.Login(ctx, req.Username, req.Password)
+	// 使用认证服务登录
+	tokenPair, user, err := s.authUc.LoginWithToken(ctx, req.Username, req.Password)
 	if err != nil {
 		if err == biz.ErrUserNotFound {
 			return &v1.LoginResponse{
@@ -147,18 +158,6 @@ func (s *UserService) Login(ctx context.Context, req *v1.LoginRequest) (*v1.Logi
 		}, nil
 	}
 
-	// 生成Token
-	token, err := s.jwtManager.GenerateToken(user.ID, user.Username)
-	if err != nil {
-		s.log.WithContext(ctx).Errorf("generate token failed: %v", err)
-		return &v1.LoginResponse{
-			Base: &commonv1.BaseResponse{
-				StatusCode: int32(commonv1.ErrorCode_SERVER_ERROR),
-				StatusMsg:  "generate token failed",
-			},
-		}, nil
-	}
-
 	return &v1.LoginResponse{
 		Base: &commonv1.BaseResponse{
 			StatusCode: 0,
@@ -166,7 +165,7 @@ func (s *UserService) Login(ctx context.Context, req *v1.LoginRequest) (*v1.Logi
 		},
 		Data: &v1.LoginData{
 			UserId: user.ID,
-			Token:  token,
+			Token:  tokenPair.AccessToken,
 		},
 	}, nil
 }
@@ -178,7 +177,7 @@ func (s *UserService) GetUser(ctx context.Context, req *v1.GetUserRequest) (*v1.
 		return &v1.GetUserResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid user id",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -241,7 +240,7 @@ func (s *UserService) RelationAction(ctx context.Context, req *v1.RelationAction
 		return &v1.RelationActionResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid user id",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -268,7 +267,7 @@ func (s *UserService) RelationAction(ctx context.Context, req *v1.RelationAction
 		if err == biz.ErrAlreadyFollow || err == biz.ErrNotFollow {
 			return &v1.RelationActionResponse{
 				Base: &commonv1.BaseResponse{
-					StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
+					StatusCode: int32(commonv1.ErrorCode_ALREADY_FOLLOW),
 					StatusMsg:  err.Error(),
 				},
 			}, nil
@@ -277,7 +276,7 @@ func (s *UserService) RelationAction(ctx context.Context, req *v1.RelationAction
 		return &v1.RelationActionResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_SERVER_ERROR),
-				StatusMsg:  "relation action failed",
+				StatusMsg:  "operation failed",
 			},
 		}, nil
 	}
@@ -297,7 +296,7 @@ func (s *UserService) GetFollowList(ctx context.Context, req *v1.GetFollowListRe
 		return &v1.GetFollowListResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid user id",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -338,7 +337,7 @@ func (s *UserService) GetFollowerList(ctx context.Context, req *v1.GetFollowerLi
 		return &v1.GetFollowerListResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid user id",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -379,7 +378,7 @@ func (s *UserService) GetFriendList(ctx context.Context, req *v1.GetFriendListRe
 		return &v1.GetFriendListResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
-				StatusMsg:  "invalid user id",
+				StatusMsg:  err.Error(),
 			},
 		}, nil
 	}
@@ -404,14 +403,14 @@ func (s *UserService) GetFriendList(ctx context.Context, req *v1.GetFriendListRe
 			Name:            user.Nickname,
 			FollowCount:     int64(user.FollowCount),
 			FollowerCount:   int64(user.FollowerCount),
-			IsFollow:        true,
+			IsFollow:        user.IsFollow,
 			Avatar:          user.Avatar,
 			BackgroundImage: user.BackgroundImage,
 			Signature:       user.Signature,
 			TotalFavorited:  user.TotalFavorited,
 			WorkCount:       int64(user.WorkCount),
 			FavoriteCount:   int64(user.FavoriteCount),
-			Message:         "", // TODO: 获取最新消息
+			Message:         "暂无消息",
 			MsgType:         1,
 		}
 		userList = append(userList, friendUser)
@@ -427,8 +426,6 @@ func (s *UserService) GetFriendList(ctx context.Context, req *v1.GetFriendListRe
 		},
 	}, nil
 }
-
-// gRPC内部调用接口实现
 
 // GetUserInfo 获取用户信息
 func (s *UserService) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {
@@ -461,7 +458,7 @@ func (s *UserService) GetUsersInfo(ctx context.Context, req *v1.GetUsersInfoRequ
 
 // VerifyToken 验证Token
 func (s *UserService) VerifyToken(ctx context.Context, req *v1.VerifyTokenRequest) (*v1.VerifyTokenResponse, error) {
-	claims, err := s.jwtManager.VerifyToken(req.Token)
+	claims, err := s.authUc.VerifyToken(ctx, req.Token)
 	if err != nil {
 		return &v1.VerifyTokenResponse{
 			Valid: false,
@@ -499,8 +496,6 @@ func (s *UserService) UpdateUserStats(ctx context.Context, req *v1.UpdateUserSta
 
 	return &emptypb.Empty{}, nil
 }
-
-// 辅助方法
 
 // convertToCommonUser 转换为通用用户信息
 func (s *UserService) convertToCommonUser(user *biz.User, isFollow bool) *commonv1.User {

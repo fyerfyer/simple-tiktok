@@ -13,20 +13,12 @@ paths:
                 - UserService
             description: 关注操作
             operationId: UserService_RelationAction
-            parameters:
-                - name: token
-                  in: query
-                  schema:
-                    type: string
-                - name: toUserId
-                  in: query
-                  schema:
-                    type: string
-                - name: actionType
-                  in: query
-                  schema:
-                    type: integer
-                    format: int32
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.v1.RelationActionRequest'
+                required: true
             responses:
                 "200":
                     description: OK
@@ -331,6 +323,17 @@ components:
                 data:
                     $ref: '#/components/schemas/user.v1.RegisterData'
             description: 用户注册响应
+        user.v1.RelationActionRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                toUserId:
+                    type: string
+                actionType:
+                    type: integer
+                    format: int32
+            description: 关注操作请求
         user.v1.RelationActionResponse:
             type: object
             properties:

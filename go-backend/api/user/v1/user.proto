@@ -36,7 +36,8 @@ service UserService {
   // 关注操作
   rpc RelationAction(RelationActionRequest) returns (RelationActionResponse) {
     option (google.api.http) = {
-      post: "/douyin/relation/action"
+      post: "/douyin/relation/action",
+      body: "*"
     };
   }
   

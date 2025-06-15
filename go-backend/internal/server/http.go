@@ -20,6 +20,10 @@ func NewHTTPServer(
 	c *conf.Server,
 	userService *service.UserService,
 	authMiddleware *middleware.AuthMiddleware,
+	rbacMiddleware *middleware.RBACMiddleware,
+	rateLimitMiddleware *middleware.RateLimitMiddleware,
+	securityMiddleware *middleware.SecurityMiddleware,
+
 	logger log.Logger,
 ) *http.Server {
 	// 需要认证的路由中间件
@@ -40,14 +44,32 @@ func NewHTTPServer(
 		"/douyin/feed",
 	).Build()
 
+	// 需要权限检查的路由中间件
+	permissionRequired := selector.Server(
+		rbacMiddleware.ResourceAction(),
+	).Path(
+		"/douyin/video/delete",   // 需要特定权限
+		"/douyin/comment/delete", // 需要特定权限
+		"/douyin/admin",          // 需要管理员权限
+	).Build()
+
+	// 限流中间件
+	rateLimiter := rateLimitMiddleware.Limit()
+
+	// 安全中间件
+	security := securityMiddleware.GlobalSecurityHandler()
+
 	var opts = []http.ServerOption{
 		http.Middleware(
-			recovery.Recovery(),
-			logging.Server(logger),
-			metrics.Server(),
-			validate.Validator(),
-			authRequired, // 在这里配置认证中间件
-			optionalAuth, // 在这里配置可选认证中间件
+			recovery.Recovery(),    // 恢复中间件
+			logging.Server(logger), // 日志中间件
+			metrics.Server(),       // 指标中间件
+			validate.Validator(),   // 验证器中间件
+			security,               // 全局安全中间件
+			rateLimiter,            // 限流中间件
+			authRequired,           // 认证中间件
+			optionalAuth,           // 可选认证中间件
+			permissionRequired,     // 权限中间件
 		),
 	}
 
@@ -63,7 +85,7 @@ func NewHTTPServer(
 
 	srv := http.NewServer(opts...)
 
-	// 注册用户服务HTTP路由（只传两个参数）
+	// 注册用户服务HTTP路由
 	v1.RegisterUserServiceHTTPServer(srv, userService)
 
 	return srv

@@ -2,6 +2,9 @@ package data
 
 import (
 	"go-backend/internal/conf"
+	"go-backend/internal/data/cache"
+	pkgcache "go-backend/pkg/cache"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
@@ -12,7 +15,17 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewUserRepo, NewRelationRepo)
+var ProviderSet = wire.NewSet(
+	NewData,
+	NewUserRepo,
+	NewRelationRepo,
+	NewRoleRepo,
+	NewPermissionRepo,
+	NewSessionRepo,
+	NewUserCache,
+	NewAuthCache,
+	NewMultiLevelCache,
+)
 
 // Data .
 type Data struct {
@@ -66,4 +79,25 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	}
 
 	return d, cleanup, nil
+}
+
+// NewMultiLevelCache create multilevel cache
+func NewMultiLevelCache(data *Data) *pkgcache.MultiLevelCache {
+	config := &pkgcache.CacheConfig{
+		LocalTTL: 5 * time.Minute,
+		RedisTTL: 30 * time.Minute,
+		EnableL1: true,
+		EnableL2: true,
+	}
+	return pkgcache.NewMultiLevelCache(data.rdb, config)
+}
+
+// NewUserCache create user cache
+func NewUserCache(multiCache *pkgcache.MultiLevelCache, logger log.Logger) *cache.UserCache {
+	return cache.NewUserCache(multiCache, logger)
+}
+
+// NewAuthCache create auth cache
+func NewAuthCache(multiCache *pkgcache.MultiLevelCache, logger log.Logger) *cache.AuthCache {
+	return cache.NewAuthCache(multiCache, logger)
 }

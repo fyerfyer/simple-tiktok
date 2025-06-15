@@ -121,6 +121,9 @@ func _UserService_GetUser0_HTTP_Handler(srv UserServiceHTTPServer) func(ctx http
 func _UserService_RelationAction0_HTTP_Handler(srv UserServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in RelationActionRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
@@ -293,10 +296,10 @@ func (c *UserServiceHTTPClientImpl) Register(ctx context.Context, in *RegisterRe
 func (c *UserServiceHTTPClientImpl) RelationAction(ctx context.Context, in *RelationActionRequest, opts ...http.CallOption) (*RelationActionResponse, error) {
 	var out RelationActionResponse
 	pattern := "/douyin/relation/action"
-	path := binding.EncodeURL(pattern, in, true)
+	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationUserServiceRelationAction))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "POST", path, nil, &out, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

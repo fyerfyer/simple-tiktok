@@ -9,7 +9,6 @@ package main
 import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/google/wire"
 	"go-backend/internal/biz"
 	"go-backend/internal/conf"
 	"go-backend/internal/data"
@@ -17,7 +16,7 @@ import (
 	"go-backend/internal/server"
 	"go-backend/internal/service"
 	"go-backend/pkg/auth"
-	"go-backend/pkg/utils"
+	"go-backend/pkg/security"
 )
 
 import (
@@ -32,16 +31,31 @@ func wireApp(confServer *conf.Server, confData *conf.Data, bootstrap *conf.Boots
 	if err != nil {
 		return nil, nil, err
 	}
-	userRepo := data.NewUserRepo(dataData, logger)
+	multiLevelCache := data.NewMultiLevelCache(dataData)
+	userCache := data.NewUserCache(multiLevelCache, logger)
+	passwordManager := newPasswordManager()
+	userRepo := data.NewUserRepo(dataData, userCache, passwordManager, logger)
 	userUsecase := biz.NewUserUsecase(userRepo, logger)
 	relationRepo := data.NewRelationRepo(dataData, logger)
 	relationUsecase := biz.NewRelationUsecase(relationRepo, logger)
+	authCache := data.NewAuthCache(multiLevelCache, logger)
+	sessionRepo := data.NewSessionRepo(dataData, authCache, logger)
 	jwtManager := newJWTManager(bootstrap)
+	sessionManager := newSessionManager()
+	authUsecase := biz.NewAuthUsecase(sessionRepo, userRepo, jwtManager, sessionManager, logger)
+	roleRepo := data.NewRoleRepo(dataData, logger)
+	permissionRepo := data.NewPermissionRepo(dataData, roleRepo, logger)
+	rbacManager := newMemoryRBACManager()
+	permissionUsecase := biz.NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, logger)
 	validator := newValidator()
-	userService := service.NewUserService(userUsecase, relationUsecase, jwtManager, validator, logger)
-	authMiddleware := newAuthMiddleware(jwtManager)
+	userService := service.NewUserService(userUsecase, relationUsecase, authUsecase, permissionUsecase, jwtManager, validator, logger)
+	authMiddleware := middleware.NewAuthMiddleware(jwtManager, logger)
 	grpcServer := server.NewGRPCServer(confServer, userService, authMiddleware, logger)
-	httpServer := server.NewHTTPServer(confServer, userService, authMiddleware, logger)
+	permissionChecker := newSimplePermissionChecker(rbacManager)
+	rbacMiddleware := middleware.NewRBACMiddleware(permissionChecker, logger)
+	rateLimitMiddleware := middleware.NewRateLimitMiddleware(logger)
+	securityMiddleware := middleware.NewSecurityMiddleware(validator, logger)
+	httpServer := server.NewHTTPServer(confServer, userService, authMiddleware, rbacMiddleware, rateLimitMiddleware, securityMiddleware, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()
@@ -50,14 +64,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, bootstrap *conf.Boots
 
 // wire.go:
 
-// ProviderSet is providers.
-var ProviderSet = wire.NewSet(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, newJWTManager,
-	newPasswordManager,
-	newValidator,
-	newAuthMiddleware,
-)
-
-// newJWTManager JWT manager provider
+// Provider functions
 func newJWTManager(bc *conf.Bootstrap) *auth.JWTManager {
 	return auth.NewJWTManager(
 		bc.Jwt.Secret,
@@ -65,17 +72,22 @@ func newJWTManager(bc *conf.Bootstrap) *auth.JWTManager {
 	)
 }
 
-// newPasswordManager password manager provider
 func newPasswordManager() *auth.PasswordManager {
 	return auth.NewPasswordManager()
 }
 
-// newValidator param validator provider
-func newValidator() *utils.Validator {
-	return utils.NewValidator()
+func newMemoryRBACManager() auth.RBACManager {
+	return auth.NewMemoryRBACManager()
 }
 
-// newAuthMiddleware auth middleware provider
-func newAuthMiddleware(jwtManager *auth.JWTManager) *middleware.AuthMiddleware {
-	return middleware.NewAuthMiddleware(jwtManager)
+func newSimplePermissionChecker(rbacManager auth.RBACManager) auth.PermissionChecker {
+	return auth.NewSimplePermissionChecker(rbacManager)
+}
+
+func newValidator() *security.Validator {
+	return security.NewValidator()
+}
+
+func newSessionManager() auth.SessionManager {
+	return auth.NewMemorySessionManager()
 }

@@ -1,8 +1,6 @@
 //go:build wireinject
 // +build wireinject
 
-// The build tag makes sure the stub is not built in the final build.
-
 package main
 
 import (
@@ -13,26 +11,42 @@ import (
 	"go-backend/internal/server"
 	"go-backend/internal/service"
 	"go-backend/pkg/auth"
-	"go-backend/pkg/utils"
+	"go-backend/pkg/security"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 )
 
-// ProviderSet is providers.
-var ProviderSet = wire.NewSet(
-	server.ProviderSet,
-	data.ProviderSet,
-	biz.ProviderSet,
-	service.ProviderSet,
-	newJWTManager,
-	newPasswordManager,
-	newValidator,
-	newAuthMiddleware,
-)
+// wireApp init kratos application.
+func wireApp(*conf.Server, *conf.Data, *conf.Bootstrap, log.Logger) (*kratos.App, func(), error) {
+	panic(wire.Build(
+		// 各层的ProviderSet
+		server.ProviderSet,
+		data.ProviderSet,
+		biz.ProviderSet,
+		service.ProviderSet,
+		middleware.ProviderSet,
 
-// newJWTManager JWT manager provider
+		// pkg层的providers
+		newJWTManager,
+		newPasswordManager,
+		newMemoryRBACManager,
+		newSimplePermissionChecker,
+		newValidator,
+		newSessionManager, // 添加这个
+
+		// 接口绑定
+		wire.Bind(new(biz.AuthRepo), new(*data.SessionRepo)),
+		wire.Bind(new(biz.RoleRepo), new(*data.RoleRepo)),
+		wire.Bind(new(biz.PermissionRepo), new(*data.PermissionRepo)),
+
+		// 主应用构造器
+		newApp,
+	))
+}
+
+// Provider functions
 func newJWTManager(bc *conf.Bootstrap) *auth.JWTManager {
 	return auth.NewJWTManager(
 		bc.Jwt.Secret,
@@ -40,22 +54,22 @@ func newJWTManager(bc *conf.Bootstrap) *auth.JWTManager {
 	)
 }
 
-// newPasswordManager password manager provider
 func newPasswordManager() *auth.PasswordManager {
 	return auth.NewPasswordManager()
 }
 
-// newValidator param validator provider
-func newValidator() *utils.Validator {
-	return utils.NewValidator()
+func newMemoryRBACManager() auth.RBACManager {
+	return auth.NewMemoryRBACManager()
 }
 
-// newAuthMiddleware auth middleware provider
-func newAuthMiddleware(jwtManager *auth.JWTManager) *middleware.AuthMiddleware {
-	return middleware.NewAuthMiddleware(jwtManager)
+func newSimplePermissionChecker(rbacManager auth.RBACManager) auth.PermissionChecker {
+	return auth.NewSimplePermissionChecker(rbacManager)
 }
 
-// wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Data, *conf.Bootstrap, log.Logger) (*kratos.App, func(), error) {
-	panic(wire.Build(ProviderSet, newApp))
+func newValidator() *security.Validator {
+	return security.NewValidator()
+}
+
+func newSessionManager() auth.SessionManager {
+	return auth.NewMemorySessionManager()
 }
