@@ -12,7 +12,7 @@ import (
 
 func TestMemorySessionManager(t *testing.T) {
 	manager := NewMemorySessionManager()
-	defer manager.cleanup()
+	defer manager.Close()
 
 	userID := int64(12345)
 	refreshToken := "test-refresh-token"

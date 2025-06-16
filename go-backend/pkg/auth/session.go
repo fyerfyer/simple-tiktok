@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -15,18 +16,24 @@ type SessionManager interface {
 	DeleteSession(userID int64) error
 	IsSessionValid(userID int64, refreshToken string) bool
 	CleanupExpiredSessions() error
+	Close() error
 }
 
 // MemorySessionManager 内存会话管理器
 type MemorySessionManager struct {
 	sessions map[int64]*domain.UserSession
 	mutex    sync.RWMutex
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 // NewMemorySessionManager 创建内存会话管理器
 func NewMemorySessionManager() *MemorySessionManager {
+	ctx, cancel := context.WithCancel(context.Background())
 	manager := &MemorySessionManager{
 		sessions: make(map[int64]*domain.UserSession),
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 
 	// 启动清理goroutine
@@ -127,9 +134,20 @@ func (s *MemorySessionManager) cleanup() {
 	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		s.CleanupExpiredSessions()
+	for {
+		select {
+		case <-s.ctx.Done():
+			return // 收到停止信号，退出清理循环
+		case <-ticker.C:
+			s.CleanupExpiredSessions()
+		}
 	}
+}
+
+// Close 关闭会话管理器
+func (s *MemorySessionManager) Close() error {
+	s.cancel() // 发送停止信号给cleanup goroutine
+	return nil
 }
 
 // GetAllSessions 获取所有会话 (调试用)

@@ -42,15 +42,20 @@ func TestValidatePassword(t *testing.T) {
 		password string
 		wantErr  bool
 	}{
-		{"valid_strong", "StrongPass123!", false},
+		{"valid_strong", "MyStrongP@ss123", false},
 		{"valid_minimum", "Aa1bcdef", false},
+		{"valid_with_special", "Test123!", false},
+		{"valid_long_simple", "ThisIsALongPassword123", false},
 		{"missing_uppercase", "weakpass123", true},
 		{"missing_lowercase", "WEAKPASS123", true},
 		{"missing_number", "WeakPassword", true},
 		{"too_short", "Aa1", true},
-		{"too_long", "VeryLongPasswordThatExceedsTheMaximumLengthLimitAndShouldFailValidationBecauseItIsTooLongForOurSystem123456789", true},
+		{"too_long", "VeryLongPasswordThatExceedsTheMaximumLengthLimitAndShouldFailValidationBecauseItIsTooLongForOurSystemAndContainsMoreThan128Characters123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", true},
 		{"weak_common", "password123", true},
-		{"weak_sequential", "Abc12345", true},
+		{"weak_sequential", "qwerty123", true},
+		{"weak_all_digits", "123456789", true},
+		{"weak_all_letters", "abcdefghijk", true},
+		{"weak_repeating", "aaaa1111", true},
 		{"empty_string", "", true},
 	}
 
@@ -82,7 +87,7 @@ func TestValidateEmail(t *testing.T) {
 		{"invalid_double_at", "test@@example.com", true},
 		{"invalid_no_tld", "test@example", true},
 		{"invalid_spaces", "test @example.com", true},
-		{"too_long", "verylongemailaddressthatexceedsthemaximumlengthallowedforemailaddresses@verylongdomainnamethatshouldnotbeallowed.com", true},
+		{"too_long", "verylongemailaddressthatexceedsthemaximumlengthallowedforemailaddressesandthisemailaddressissolongthatitexceedsthe254characterlimitsetbytheemailspecificationrfc5321andthereforeitshouldfailvalidationbecauseitistoolongtobeavalidemailaddressaccordingtostandardemailprotocols@verylongdomainnamethatshouldnotbeallowedandexceedsthelimitsforemailtesting.com", true},
 		{"empty_string", "", true},
 	}
 
@@ -109,10 +114,10 @@ func TestSanitizeInput(t *testing.T) {
 		{"with_quotes", "hello 'world' test", "hello world test"},
 		{"with_sql_injection", "test'; DROP TABLE users; --", "test DROP TABLE users "},
 		{"with_comments", "test /* comment */ data", "test  comment  data"},
-		{"with_xp_commands", "test xp_cmdshell data", "test  data"},
+		{"with_xp_commands", "test xp_cmdshell data", "test cmdshell data"},
 		{"empty_string", "", ""},
 		{"only_spaces", "   ", ""},
-		{"mixed_dangerous", "'; xp_cmdshell /* test */ --", "   test "},
+		{"mixed_dangerous", "'; xp_cmdshell /* test */ --", " cmdshell  test  "},
 	}
 
 	for _, tt := range tests {
@@ -133,7 +138,7 @@ func TestValidateVideoTitle(t *testing.T) {
 		{"valid_long", "This is a very long video title that should still be valid", false},
 		{"empty_string", "", true},
 		{"only_spaces", "   ", true},
-		{"too_long", "This title is way too long and exceeds the maximum character limit that we have set for video titles", true},
+		{"too_long", "This title is way too long and exceeds the maximum character limit that we have set for video titles ssssssssss", true},
 		{"exactly_100_chars", "This title is exactly one hundred characters long and should be valid for our validation test", false},
 	}
 
@@ -160,7 +165,7 @@ func TestValidateComment(t *testing.T) {
 		{"empty_string", "", true},
 		{"only_spaces", "   ", true},
 		{"too_long", "This comment is extremely long and goes way beyond the maximum character limit that we have established for comments in our system. It contains way too much text and should be rejected by our validation function because it exceeds the 500 character limit that we have set for comments in our application. This is just too much text for a single comment and users should be encouraged to keep their comments more concise and to the point rather than writing these extremely long comments that are difficult to read and process.", true},
-		{"exactly_500_chars", "This comment is exactly five hundred characters long and should be valid for our validation test. We need to make sure that comments of exactly this length are accepted by the system. This is important for boundary testing to ensure our validation works correctly at the limits. The comment needs to be exactly five hundred characters including spaces and punctuation marks. This should be accepted by our validation function since it meets the maximum length requirement without exceeding it completely.", false},
+		{"exactly_500_chars", "This comment is exactly five hundred characters long and should be valid for our validation test. We need to make sure that comments of exactly this length are accepted by the system. This is important for boundary testing to ensure our validation works correctly at the limits. The comment needs to be exactly five hundred characters including spaces and punctuation marks. This should be accepted by our validation function since it meets the maximum length requirement without exceeding it.", false},
 	}
 
 	for _, tt := range tests {

@@ -242,6 +242,7 @@ func TestPermissionMatching(t *testing.T) {
 		perm := &domain.Permission{
 			Resource: "/user",
 			Action:   "GET",
+			Status:   int8(domain.PermissionStatusActive), // 设置为激活状态
 		}
 
 		assert.True(t, perm.Match("/user", "GET"))
@@ -252,6 +253,7 @@ func TestPermissionMatching(t *testing.T) {
 		adminPerm := &domain.Permission{
 			Resource: "/*",
 			Action:   "*",
+			Status:   int8(domain.PermissionStatusActive), // 设置为激活状态
 		}
 
 		assert.True(t, adminPerm.Match("/user", "GET"))
