@@ -12,25 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupUserUsecase(t *testing.T) (*UserUsecase, *MockUserRepo, *testutils.TestEnv, func()) {
-	env, cleanup, err := testutils.SetupTestWithCleanup()
-	require.NoError(t, err)
-
-	userRepo := NewMockUserRepo(t)
-	logger := log.DefaultLogger
-
-	uc := NewUserUsecase(userRepo, logger)
-
-	return uc, userRepo, env, cleanup
-}
-
 func TestUserUsecase_Register(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("Register_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "testuser"
 		password := "Password123!"
 
@@ -55,6 +48,10 @@ func TestUserUsecase_Register(t *testing.T) {
 	})
 
 	t.Run("Register_UserExists", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "existinguser"
 		password := "Password123!"
 
@@ -73,6 +70,10 @@ func TestUserUsecase_Register(t *testing.T) {
 	})
 
 	t.Run("Register_CreateUserFailed", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "newuser"
 		password := "Password123!"
 
@@ -87,12 +88,17 @@ func TestUserUsecase_Register(t *testing.T) {
 }
 
 func TestUserUsecase_Login(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("Login_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "testuser"
 		password := "Password123!"
 
@@ -114,6 +120,10 @@ func TestUserUsecase_Login(t *testing.T) {
 	})
 
 	t.Run("Login_WrongPassword", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "testuser"
 		password := "wrongpassword"
 
@@ -127,6 +137,10 @@ func TestUserUsecase_Login(t *testing.T) {
 	})
 
 	t.Run("Login_UserNotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "nonexistent"
 		password := "Password123!"
 
@@ -141,12 +155,17 @@ func TestUserUsecase_Login(t *testing.T) {
 }
 
 func TestUserUsecase_GetUser(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("GetUser_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(1)
 
 		expectedUser := &User{
@@ -165,6 +184,10 @@ func TestUserUsecase_GetUser(t *testing.T) {
 	})
 
 	t.Run("GetUser_NotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(999)
 
 		userRepo.EXPECT().GetUser(ctx, userID).Return(nil, ErrUserNotFound)
@@ -178,12 +201,17 @@ func TestUserUsecase_GetUser(t *testing.T) {
 }
 
 func TestUserUsecase_GetUsers(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("GetUsers_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userIDs := []int64{1, 2, 3}
 
 		expectedUsers := []*User{
@@ -204,6 +232,10 @@ func TestUserUsecase_GetUsers(t *testing.T) {
 	})
 
 	t.Run("GetUsers_Empty", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userIDs := []int64{}
 
 		userRepo.EXPECT().GetUsers(ctx, userIDs).Return([]*User{}, nil)
@@ -216,12 +248,17 @@ func TestUserUsecase_GetUsers(t *testing.T) {
 }
 
 func TestUserUsecase_UpdateUser(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("UpdateUser_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		user := &User{
 			ID:       1,
 			Username: "testuser",
@@ -236,6 +273,10 @@ func TestUserUsecase_UpdateUser(t *testing.T) {
 	})
 
 	t.Run("UpdateUser_Failed", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		user := &User{
 			ID:       999,
 			Username: "testuser",
@@ -251,12 +292,17 @@ func TestUserUsecase_UpdateUser(t *testing.T) {
 }
 
 func TestUserUsecase_GetUserByUsername(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("GetUserByUsername_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "testuser"
 
 		expectedUser := &User{
@@ -275,6 +321,10 @@ func TestUserUsecase_GetUserByUsername(t *testing.T) {
 	})
 
 	t.Run("GetUserByUsername_NotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		username := "nonexistent"
 
 		userRepo.EXPECT().GetUserByUsername(ctx, username).Return(nil, ErrUserNotFound)
@@ -288,12 +338,17 @@ func TestUserUsecase_GetUserByUsername(t *testing.T) {
 }
 
 func TestUserUsecase_UpdateUserStats(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("UpdateUserStats_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		stats := &UserStats{
 			FollowCountDelta:    1,
@@ -311,6 +366,10 @@ func TestUserUsecase_UpdateUserStats(t *testing.T) {
 	})
 
 	t.Run("UpdateUserStats_Failed", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(999)
 		stats := &UserStats{
 			FollowCountDelta: 1,
@@ -325,12 +384,17 @@ func TestUserUsecase_UpdateUserStats(t *testing.T) {
 }
 
 func TestUserUsecase_ChangePassword(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("ChangePassword_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		oldPassword := "OldPassword123!"
 		newPassword := "NewPassword123!"
@@ -350,6 +414,10 @@ func TestUserUsecase_ChangePassword(t *testing.T) {
 	})
 
 	t.Run("ChangePassword_UserNotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(999)
 		oldPassword := "OldPassword123!"
 		newPassword := "NewPassword123!"
@@ -363,6 +431,10 @@ func TestUserUsecase_ChangePassword(t *testing.T) {
 	})
 
 	t.Run("ChangePassword_WrongOldPassword", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		oldPassword := "WrongPassword123!"
 		newPassword := "NewPassword123!"
@@ -383,12 +455,17 @@ func TestUserUsecase_ChangePassword(t *testing.T) {
 }
 
 func TestUserUsecase_UpdateProfile(t *testing.T) {
-	uc, userRepo, _, cleanup := setupUserUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("UpdateProfile_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		nickname := "New Nickname"
 		avatar := "https://example.com/new-avatar.jpg"
@@ -416,6 +493,10 @@ func TestUserUsecase_UpdateProfile(t *testing.T) {
 	})
 
 	t.Run("UpdateProfile_UserNotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(999)
 
 		userRepo.EXPECT().GetUser(ctx, userID).Return(nil, ErrUserNotFound)
@@ -427,6 +508,10 @@ func TestUserUsecase_UpdateProfile(t *testing.T) {
 	})
 
 	t.Run("UpdateProfile_PartialUpdate", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		userRepo := NewMockUserRepo(t)
+		uc := NewUserUsecase(userRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		nickname := "New Nickname"
 

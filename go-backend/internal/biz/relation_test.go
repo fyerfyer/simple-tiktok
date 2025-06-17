@@ -11,25 +11,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupRelationUsecase(t *testing.T) (*RelationUsecase, *MockRelationRepo, *testutils.TestEnv, func()) {
-	env, cleanup, err := testutils.SetupTestWithCleanup()
-	require.NoError(t, err)
-
-	relationRepo := NewMockRelationRepo(t)
-	logger := log.DefaultLogger
-
-	uc := NewRelationUsecase(relationRepo, logger)
-
-	return uc, relationRepo, env, cleanup
-}
-
 func TestRelationUsecase_Follow(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("Follow_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -41,6 +34,10 @@ func TestRelationUsecase_Follow(t *testing.T) {
 	})
 
 	t.Run("Follow_SelfFollow", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 
 		err := uc.Follow(ctx, userID, userID)
@@ -50,6 +47,10 @@ func TestRelationUsecase_Follow(t *testing.T) {
 	})
 
 	t.Run("Follow_AlreadyFollowing", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -62,6 +63,10 @@ func TestRelationUsecase_Follow(t *testing.T) {
 	})
 
 	t.Run("Follow_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -75,12 +80,17 @@ func TestRelationUsecase_Follow(t *testing.T) {
 }
 
 func TestRelationUsecase_Unfollow(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("Unfollow_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -92,6 +102,10 @@ func TestRelationUsecase_Unfollow(t *testing.T) {
 	})
 
 	t.Run("Unfollow_NotFollowing", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -104,6 +118,10 @@ func TestRelationUsecase_Unfollow(t *testing.T) {
 	})
 
 	t.Run("Unfollow_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -117,12 +135,17 @@ func TestRelationUsecase_Unfollow(t *testing.T) {
 }
 
 func TestRelationUsecase_IsFollowing(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("IsFollowing_True", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -135,6 +158,10 @@ func TestRelationUsecase_IsFollowing(t *testing.T) {
 	})
 
 	t.Run("IsFollowing_False", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -147,6 +174,10 @@ func TestRelationUsecase_IsFollowing(t *testing.T) {
 	})
 
 	t.Run("IsFollowing_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		followUserID := int64(2)
 
@@ -160,12 +191,17 @@ func TestRelationUsecase_IsFollowing(t *testing.T) {
 }
 
 func TestRelationUsecase_GetFollowList(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("GetFollowList_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(1)
 		size := int32(20)
@@ -188,6 +224,10 @@ func TestRelationUsecase_GetFollowList(t *testing.T) {
 	})
 
 	t.Run("GetFollowList_DefaultPagination", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(0) // 应该被修正为1
 		size := int32(0) // 应该被修正为20
@@ -205,6 +245,10 @@ func TestRelationUsecase_GetFollowList(t *testing.T) {
 	})
 
 	t.Run("GetFollowList_LargePageSize", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(1)
 		size := int32(100) // 应该被修正为20
@@ -222,6 +266,10 @@ func TestRelationUsecase_GetFollowList(t *testing.T) {
 	})
 
 	t.Run("GetFollowList_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(1)
 		size := int32(20)
@@ -237,12 +285,17 @@ func TestRelationUsecase_GetFollowList(t *testing.T) {
 }
 
 func TestRelationUsecase_GetFollowerList(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("GetFollowerList_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(1)
 		size := int32(20)
@@ -266,6 +319,10 @@ func TestRelationUsecase_GetFollowerList(t *testing.T) {
 	})
 
 	t.Run("GetFollowerList_DefaultPagination", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(-1) // 应该被修正为1
 		size := int32(0)  // 应该被修正为20
@@ -283,6 +340,10 @@ func TestRelationUsecase_GetFollowerList(t *testing.T) {
 	})
 
 	t.Run("GetFollowerList_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 		page := int32(1)
 		size := int32(20)
@@ -298,12 +359,17 @@ func TestRelationUsecase_GetFollowerList(t *testing.T) {
 }
 
 func TestRelationUsecase_GetFriendList(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
 
 	t.Run("GetFriendList_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 
 		expectedUsers := []*User{
@@ -323,6 +389,10 @@ func TestRelationUsecase_GetFriendList(t *testing.T) {
 	})
 
 	t.Run("GetFriendList_Empty", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 
 		relationRepo.EXPECT().GetFriendList(ctx, userID).Return([]*User{}, nil)
@@ -334,6 +404,10 @@ func TestRelationUsecase_GetFriendList(t *testing.T) {
 	})
 
 	t.Run("GetFriendList_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		relationRepo := NewMockRelationRepo(t)
+		uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 		userID := int64(1)
 
 		relationRepo.EXPECT().GetFriendList(ctx, userID).Return(nil, assert.AnError)
@@ -360,7 +434,8 @@ func TestRelationUsecase_ErrorTypes(t *testing.T) {
 }
 
 func TestRelationUsecase_PaginationValidation(t *testing.T) {
-	uc, relationRepo, _, cleanup := setupRelationUsecase(t)
+	_, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -385,6 +460,10 @@ func TestRelationUsecase_PaginationValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name+"_FollowList", func(t *testing.T) {
+			// 为每个测试用例创建独立的mock
+			relationRepo := NewMockRelationRepo(t)
+			uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 			relationRepo.EXPECT().GetFollowList(ctx, userID, tc.expectedPage, tc.expectedSize).Return([]*User{}, int64(0), nil)
 
 			_, _, err := uc.GetFollowList(ctx, userID, tc.inputPage, tc.inputSize)
@@ -392,6 +471,10 @@ func TestRelationUsecase_PaginationValidation(t *testing.T) {
 		})
 
 		t.Run(tc.name+"_FollowerList", func(t *testing.T) {
+			// 为每个测试用例创建独立的mock
+			relationRepo := NewMockRelationRepo(t)
+			uc := NewRelationUsecase(relationRepo, log.DefaultLogger)
+
 			relationRepo.EXPECT().GetFollowerList(ctx, userID, tc.expectedPage, tc.expectedSize).Return([]*User{}, int64(0), nil)
 
 			_, _, err := uc.GetFollowerList(ctx, userID, tc.inputPage, tc.inputSize)

@@ -269,7 +269,7 @@ func TestAuthUsecase_GetUserSession(t *testing.T) {
 			ExpiresAt:    time.Now().Add(time.Hour),
 		}
 
-		authRepo.EXPECT().GetSession(ctx, testUser.ID).Return(expectedSession, nil)
+		authRepo.EXPECT().GetSession(ctx, testUser.ID).Return(expectedSession, nil).Once()
 
 		session, err := uc.GetUserSession(ctx, testUser.ID)
 
@@ -279,7 +279,8 @@ func TestAuthUsecase_GetUserSession(t *testing.T) {
 	})
 
 	t.Run("GetUserSession_NotFound", func(t *testing.T) {
-		authRepo.EXPECT().GetSession(ctx, testUser.ID).Return(nil, ErrSessionExpired)
+		// 清理之前的 mock 期望或使用新的 mock 实例
+		authRepo.EXPECT().GetSession(ctx, testUser.ID).Return(nil, ErrSessionExpired).Once()
 
 		session, err := uc.GetUserSession(ctx, testUser.ID)
 
@@ -290,7 +291,8 @@ func TestAuthUsecase_GetUserSession(t *testing.T) {
 }
 
 func TestAuthUsecase_ValidateSession(t *testing.T) {
-	uc, authRepo, _, env, cleanup := setupAuthUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -301,6 +303,13 @@ func TestAuthUsecase_ValidateSession(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("ValidateSession_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		authRepo := NewMockAuthRepo(t)
+		userRepo := NewMockUserRepo(t)
+		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
+		sessionMgr := auth.NewMemorySessionManager()
+		uc := NewAuthUsecase(authRepo, userRepo, jwtManager, sessionMgr, log.DefaultLogger)
+
 		refreshToken := "valid-refresh-token"
 		session := &domain.UserSession{
 			UserID:       testUser.ID,
@@ -317,6 +326,13 @@ func TestAuthUsecase_ValidateSession(t *testing.T) {
 	})
 
 	t.Run("ValidateSession_TokenMismatch", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		authRepo := NewMockAuthRepo(t)
+		userRepo := NewMockUserRepo(t)
+		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
+		sessionMgr := auth.NewMemorySessionManager()
+		uc := NewAuthUsecase(authRepo, userRepo, jwtManager, sessionMgr, log.DefaultLogger)
+
 		refreshToken := "valid-refresh-token"
 		wrongToken := "wrong-refresh-token"
 		session := &domain.UserSession{
@@ -334,12 +350,20 @@ func TestAuthUsecase_ValidateSession(t *testing.T) {
 	})
 
 	t.Run("ValidateSession_SessionNotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		authRepo := NewMockAuthRepo(t)
+		userRepo := NewMockUserRepo(t)
+		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
+		sessionMgr := auth.NewMemorySessionManager()
+		uc := NewAuthUsecase(authRepo, userRepo, jwtManager, sessionMgr, log.DefaultLogger)
+
 		authRepo.EXPECT().GetSession(ctx, testUser.ID).Return(nil, ErrSessionExpired)
 
 		isValid, err := uc.ValidateSession(ctx, testUser.ID, "any-token")
 
 		assert.Error(t, err)
 		assert.False(t, isValid)
+		assert.Equal(t, ErrSessionExpired, err)
 	})
 }
 

@@ -13,22 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupPermissionUsecase(t *testing.T) (*PermissionUsecase, *MockRoleRepo, *MockPermissionRepo, *testutils.TestEnv, func()) {
+func TestPermissionUsecase_CheckPermission(t *testing.T) {
 	env, cleanup, err := testutils.SetupTestWithCleanup()
 	require.NoError(t, err)
-
-	roleRepo := NewMockRoleRepo(t)
-	permissionRepo := NewMockPermissionRepo(t)
-	rbacManager := auth.NewMemoryRBACManager()
-	logger := log.DefaultLogger
-
-	uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, logger)
-
-	return uc, roleRepo, permissionRepo, env, cleanup
-}
-
-func TestPermissionUsecase_CheckPermission(t *testing.T) {
-	uc, _, permissionRepo, env, cleanup := setupPermissionUsecase(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -39,8 +26,14 @@ func TestPermissionUsecase_CheckPermission(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("CheckPermission_HasPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 通过内存RBAC管理器分配角色
-		err := uc.rbacManager.AssignRole(testUser.ID, 1) // 分配用户角色
+		err := rbacManager.AssignRole(testUser.ID, 1) // 分配用户角色
 		require.NoError(t, err)
 
 		hasPermission, err := uc.CheckPermission(ctx, testUser.ID, "/user", "GET")
@@ -50,6 +43,12 @@ func TestPermissionUsecase_CheckPermission(t *testing.T) {
 	})
 
 	t.Run("CheckPermission_NoPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 检查不存在的权限
 		permissionRepo.EXPECT().HasPermission(ctx, testUser.ID, "/admin", "DELETE").Return(false, nil)
 
@@ -60,6 +59,12 @@ func TestPermissionUsecase_CheckPermission(t *testing.T) {
 	})
 
 	t.Run("CheckPermission_DatabaseFallback", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 内存RBAC没有权限，回退到数据库查询
 		permissionRepo.EXPECT().HasPermission(ctx, testUser.ID, "/video", "POST").Return(true, nil)
 
@@ -71,7 +76,8 @@ func TestPermissionUsecase_CheckPermission(t *testing.T) {
 }
 
 func TestPermissionUsecase_GetUserRoles(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -82,6 +88,12 @@ func TestPermissionUsecase_GetUserRoles(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("GetUserRoles_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		expectedRoles := []*domain.Role{
 			{ID: 1, Name: "user", Description: "Regular user", Status: 1},
 			{ID: 2, Name: "admin", Description: "Administrator", Status: 1},
@@ -98,6 +110,12 @@ func TestPermissionUsecase_GetUserRoles(t *testing.T) {
 	})
 
 	t.Run("GetUserRoles_Empty", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleRepo.EXPECT().GetUserRoles(ctx, testUser.ID).Return([]*domain.Role{}, nil)
 
 		roles, err := uc.GetUserRoles(ctx, testUser.ID)
@@ -108,7 +126,8 @@ func TestPermissionUsecase_GetUserRoles(t *testing.T) {
 }
 
 func TestPermissionUsecase_GetUserPermissions(t *testing.T) {
-	uc, _, permissionRepo, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -119,6 +138,12 @@ func TestPermissionUsecase_GetUserPermissions(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("GetUserPermissions_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		expectedPermissions := []*domain.Permission{
 			{ID: 1, Name: "user:read", Resource: "/user", Action: "GET", Status: 1},
 			{ID: 2, Name: "user:update", Resource: "/user", Action: "PUT", Status: 1},
@@ -136,7 +161,8 @@ func TestPermissionUsecase_GetUserPermissions(t *testing.T) {
 }
 
 func TestPermissionUsecase_AssignRole(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -147,6 +173,12 @@ func TestPermissionUsecase_AssignRole(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("AssignRole_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleID := int64(1)
 
 		roleRepo.EXPECT().AssignRole(ctx, testUser.ID, roleID).Return(nil)
@@ -156,13 +188,19 @@ func TestPermissionUsecase_AssignRole(t *testing.T) {
 		require.NoError(t, err)
 
 		// 验证内存管理器中已分配角色
-		roles, err := uc.rbacManager.GetUserRoles(testUser.ID)
+		roles, err := rbacManager.GetUserRoles(testUser.ID)
 		require.NoError(t, err)
 		assert.Len(t, roles, 1)
 		assert.Equal(t, roleID, roles[0].ID)
 	})
 
 	t.Run("AssignRole_DatabaseError", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleID := int64(2)
 
 		roleRepo.EXPECT().AssignRole(ctx, testUser.ID, roleID).Return(ErrRoleNotFound)
@@ -175,7 +213,8 @@ func TestPermissionUsecase_AssignRole(t *testing.T) {
 }
 
 func TestPermissionUsecase_RemoveRole(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -186,10 +225,16 @@ func TestPermissionUsecase_RemoveRole(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("RemoveRole_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleID := int64(1)
 
 		// 先分配角色
-		uc.rbacManager.AssignRole(testUser.ID, roleID)
+		rbacManager.AssignRole(testUser.ID, roleID)
 
 		roleRepo.EXPECT().RemoveRole(ctx, testUser.ID, roleID).Return(nil)
 
@@ -198,14 +243,15 @@ func TestPermissionUsecase_RemoveRole(t *testing.T) {
 		require.NoError(t, err)
 
 		// 验证内存管理器中角色已被移除
-		roles, err := uc.rbacManager.GetUserRoles(testUser.ID)
+		roles, err := rbacManager.GetUserRoles(testUser.ID)
 		require.NoError(t, err)
 		assert.Empty(t, roles)
 	})
 }
 
 func TestPermissionUsecase_HasRole(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -216,6 +262,12 @@ func TestPermissionUsecase_HasRole(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("HasRole_True", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleID := int64(1)
 
 		roleRepo.EXPECT().HasRole(ctx, testUser.ID, roleID).Return(true, nil)
@@ -227,6 +279,12 @@ func TestPermissionUsecase_HasRole(t *testing.T) {
 	})
 
 	t.Run("HasRole_False", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleID := int64(2)
 
 		roleRepo.EXPECT().HasRole(ctx, testUser.ID, roleID).Return(false, nil)
@@ -239,7 +297,8 @@ func TestPermissionUsecase_HasRole(t *testing.T) {
 }
 
 func TestPermissionUsecase_InitUserDefaultRole(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -250,6 +309,12 @@ func TestPermissionUsecase_InitUserDefaultRole(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("InitUserDefaultRole_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		defaultRole := &domain.Role{
 			ID:   1,
 			Name: "user",
@@ -264,6 +329,12 @@ func TestPermissionUsecase_InitUserDefaultRole(t *testing.T) {
 	})
 
 	t.Run("InitUserDefaultRole_RoleNotFound", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		roleRepo.EXPECT().GetRoleByName(ctx, "user").Return(nil, ErrRoleNotFound)
 
 		err := uc.InitUserDefaultRole(ctx, testUser.ID)
@@ -274,7 +345,8 @@ func TestPermissionUsecase_InitUserDefaultRole(t *testing.T) {
 }
 
 func TestPermissionUsecase_IsAdmin(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -285,6 +357,12 @@ func TestPermissionUsecase_IsAdmin(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("IsAdmin_True", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		adminRole := &domain.Role{
 			ID:   2,
 			Name: "admin",
@@ -300,6 +378,12 @@ func TestPermissionUsecase_IsAdmin(t *testing.T) {
 	})
 
 	t.Run("IsAdmin_False", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		adminRole := &domain.Role{
 			ID:   2,
 			Name: "admin",
@@ -316,7 +400,8 @@ func TestPermissionUsecase_IsAdmin(t *testing.T) {
 }
 
 func TestPermissionUsecase_IsModerator(t *testing.T) {
-	uc, roleRepo, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -327,6 +412,12 @@ func TestPermissionUsecase_IsModerator(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("IsModerator_True", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		modRole := &domain.Role{
 			ID:   3,
 			Name: "moderator",
@@ -342,6 +433,12 @@ func TestPermissionUsecase_IsModerator(t *testing.T) {
 	})
 
 	t.Run("IsModerator_False", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		modRole := &domain.Role{
 			ID:   3,
 			Name: "moderator",
@@ -358,7 +455,8 @@ func TestPermissionUsecase_IsModerator(t *testing.T) {
 }
 
 func TestPermissionUsecase_ClearUserPermissionCache(t *testing.T) {
-	uc, _, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -369,8 +467,14 @@ func TestPermissionUsecase_ClearUserPermissionCache(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("ClearUserPermissionCache_Success", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 先分配角色建立缓存
-		uc.rbacManager.AssignRole(testUser.ID, 1)
+		rbacManager.AssignRole(testUser.ID, 1)
 
 		// 清除缓存
 		uc.ClearUserPermissionCache(ctx, testUser.ID)
@@ -381,7 +485,8 @@ func TestPermissionUsecase_ClearUserPermissionCache(t *testing.T) {
 }
 
 func TestPermissionUsecase_ValidateResourceAccess(t *testing.T) {
-	uc, _, permissionRepo, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -392,8 +497,14 @@ func TestPermissionUsecase_ValidateResourceAccess(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("ValidateResourceAccess_HasPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 分配用户角色
-		uc.rbacManager.AssignRole(testUser.ID, 1)
+		rbacManager.AssignRole(testUser.ID, 1)
 
 		err := uc.ValidateResourceAccess(ctx, testUser.ID, "/user", "GET")
 
@@ -401,6 +512,12 @@ func TestPermissionUsecase_ValidateResourceAccess(t *testing.T) {
 	})
 
 	t.Run("ValidateResourceAccess_NoPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		permissionRepo.EXPECT().HasPermission(ctx, testUser.ID, "/admin", "DELETE").Return(false, nil)
 
 		err := uc.ValidateResourceAccess(ctx, testUser.ID, "/admin", "DELETE")
@@ -411,7 +528,8 @@ func TestPermissionUsecase_ValidateResourceAccess(t *testing.T) {
 }
 
 func TestPermissionUsecase_CheckSpecificPermissions(t *testing.T) {
-	uc, _, _, env, cleanup := setupPermissionUsecase(t)
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -422,8 +540,14 @@ func TestPermissionUsecase_CheckSpecificPermissions(t *testing.T) {
 	testUser := users[0]
 
 	t.Run("CheckVideoPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 分配用户角色，应该有video相关权限
-		uc.rbacManager.AssignRole(testUser.ID, 1)
+		rbacManager.AssignRole(testUser.ID, 1)
 
 		hasPermission, err := uc.CheckVideoPermission(ctx, testUser.ID, "POST")
 
@@ -432,8 +556,14 @@ func TestPermissionUsecase_CheckSpecificPermissions(t *testing.T) {
 	})
 
 	t.Run("CheckCommentPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 分配用户角色，应该有comment相关权限
-		uc.rbacManager.AssignRole(testUser.ID, 1)
+		rbacManager.AssignRole(testUser.ID, 1)
 
 		hasPermission, err := uc.CheckCommentPermission(ctx, testUser.ID, "POST")
 
@@ -442,8 +572,14 @@ func TestPermissionUsecase_CheckSpecificPermissions(t *testing.T) {
 	})
 
 	t.Run("CheckUserPermission", func(t *testing.T) {
+		// 创建独立的mock和usecase
+		roleRepo := NewMockRoleRepo(t)
+		permissionRepo := NewMockPermissionRepo(t)
+		rbacManager := auth.NewMemoryRBACManager()
+		uc := NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, log.DefaultLogger)
+
 		// 分配用户角色，应该有user相关权限
-		uc.rbacManager.AssignRole(testUser.ID, 1)
+		rbacManager.AssignRole(testUser.ID, 1)
 
 		hasPermission, err := uc.CheckUserPermission(ctx, testUser.ID, "GET")
 

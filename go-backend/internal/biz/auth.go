@@ -169,7 +169,16 @@ func (uc *AuthUsecase) CheckTokenBlacklist(ctx context.Context, tokenID string) 
 
 // GetUserSession 获取用户会话
 func (uc *AuthUsecase) GetUserSession(ctx context.Context, userID int64) (*domain.UserSession, error) {
-	return uc.repo.GetSession(ctx, userID)
+	uc.log.WithContext(ctx).Infof("Getting user session for user: %d", userID)
+
+	session, err := uc.repo.GetSession(ctx, userID)
+	if err != nil {
+		uc.log.WithContext(ctx).Errorf("Failed to get user session for user %d: %v", userID, err)
+		return nil, err
+	}
+
+	uc.log.WithContext(ctx).Infof("Successfully got user session for user: %d", userID)
+	return session, nil
 }
 
 // ValidateSession 验证会话有效性
