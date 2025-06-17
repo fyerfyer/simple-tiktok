@@ -3,6 +3,7 @@ package testutils
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -31,7 +32,7 @@ type DBConfig struct {
 func NewTestDB() (*TestDB, error) {
 	config := &DBConfig{
 		Host:     "localhost",
-		Port:     3306,
+		Port:     3307, // 使用测试环境端口
 		Username: "tiktok",
 		Password: "tiktok123",
 		Database: "tiktok",
@@ -44,11 +45,13 @@ func NewTestDB() (*TestDB, error) {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
+		log.Printf("[ERROR] Failed to connect database: %v", err)
 		return nil, fmt.Errorf("failed to connect database: %w", err)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
+		log.Printf("[ERROR] Failed to get sql.DB: %v", err)
 		return nil, fmt.Errorf("failed to get sql.DB: %w", err)
 	}
 
@@ -81,23 +84,33 @@ func (tdb *TestDB) TruncateAllTables() error {
 		"user_roles",
 		"role_permissions",
 		"user_follows",
+		"user_favorites",
+		"comments",
+		"messages",
+		"videos",
 		"users",
 		"roles",
 		"permissions",
 	}
 
 	// 禁用外键检查
-	tdb.DB.Exec("SET FOREIGN_KEY_CHECKS = 0")
+	if err := tdb.DB.Exec("SET FOREIGN_KEY_CHECKS = 0").Error; err != nil {
+		return err
+	}
 
+	successCount := 0
 	for _, table := range tables {
 		if err := tdb.TruncateTable(table); err != nil {
 			// 继续清理其他表，不因单个表失败而停止
 			continue
 		}
+		successCount++
 	}
 
 	// 重新启用外键检查
-	tdb.DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
+	if err := tdb.DB.Exec("SET FOREIGN_KEY_CHECKS = 1").Error; err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -117,7 +130,10 @@ func (tdb *TestDB) IsTableExists(tableName string) bool {
 	var count int64
 	err := tdb.DB.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?",
 		tdb.config.Database, tableName).Scan(&count).Error
-	return err == nil && count > 0
+
+	exists := err == nil && count > 0
+
+	return exists
 }
 
 // GetTableRowCount 获取表行数

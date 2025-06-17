@@ -282,15 +282,21 @@ func TestSessionRepo_ExpiredTokenBlacklist(t *testing.T) {
 	ctx := context.Background()
 
 	tokenID := "expired-blacklist-token"
-	expiresAt := time.Now().Add(-time.Hour) // 已过期
+	expiresAt := time.Now().Add(-time.Hour) // Already expired
 
-	// 添加过期Token到黑名单
+	t.Logf("Test setup - tokenID: %s, expiresAt: %v, current time: %v",
+		tokenID, expiresAt, time.Now())
+
+	// Add expired token to blacklist
 	err := repo.AddTokenToBlacklist(ctx, tokenID, expiresAt)
 	require.NoError(t, err)
+	t.Logf("Successfully added expired token to blacklist")
 
-	// 检查过期Token（应该不在黑名单中）
+	// Check if expired token is blacklisted (should be false)
 	isBlacklisted, err := repo.IsTokenBlacklisted(ctx, tokenID)
 	require.NoError(t, err)
+	t.Logf("Token blacklist check result: %v (expected: false)", isBlacklisted)
+
 	assert.False(t, isBlacklisted)
 }
 

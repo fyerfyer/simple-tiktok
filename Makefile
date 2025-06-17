@@ -1,4 +1,4 @@
-.PHONY: help infra-up infra-down infra-restart logs clean
+.PHONY: help infra-up infra-down infra-restart logs clean testenv-setup testenv-down testenv-status testenv-logs testenv-clean
 
 # Default target
 help:
@@ -11,6 +11,11 @@ help:
 	@echo "  logs		   - View service logs"
 	@echo "  clean		  - Clean Docker resources"
 	@echo "  dev			- Start development environment"
+	@echo "  testenv-setup	- Start test environment"
+	@echo "  testenv-down	- Stop test environment"
+	@echo "  testenv-status	- View test environment status"
+	@echo "  testenv-logs	- View test environment logs"
+	@echo "  testenv-clean	- Clean test environment data"
 	@echo ""
 	@echo "For Kratos service commands, please execute in the go-backend directory"
 
@@ -93,3 +98,41 @@ init:
 	@echo "Creating necessary directories..."
 	@mkdir -p configs scripts
 	@echo "Initialization complete! Run 'make dev' to start the development environment"
+
+# Start test environment
+testenv-setup:
+	@echo "Starting test environment..."
+	cd deployments && docker-compose -f docker-compose.test.yml up -d
+	@echo "Waiting for services to be ready..."
+	@sleep 30
+	@echo "Test environment is ready!"
+
+# Stop test environment
+testenv-down:
+	@echo "Stopping test environment..."
+	cd deployments && docker-compose -f docker-compose.test.yml down
+
+# Check test environment status
+testenv-status:
+	cd deployments && docker-compose -f docker-compose.test.yml ps
+
+# View test environment logs
+testenv-logs:
+	cd deployments && docker-compose -f docker-compose.test.yml logs -f
+
+# Clean test environment data
+testenv-clean:
+	@echo "Cleaning test environment..."
+	cd deployments && docker-compose -f docker-compose.test.yml down -v
+	@echo "Test environment cleaned!"
+
+# Restart test environment
+testenv-restart: testenv-down testenv-setup
+
+# Enter test MySQL container
+testenv-mysql:
+	docker exec -it tiktok-mysql-test mysql -u tiktok -ptiktok123 tiktok
+
+# Enter test Redis container
+testenv-redis:
+	docker exec -it tiktok-redis-test redis-cli -a tiktok123

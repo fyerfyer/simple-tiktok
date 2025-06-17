@@ -236,8 +236,4 @@ INSERT INTO `role_permissions` (`role_id`, `permission_id`)
 SELECT r.id, p.id FROM `roles` r, `permissions` p 
 WHERE r.name = 'moderator' AND p.name IN ('video:read', 'video:update', 'video:delete', 'comment:read', 'comment:update', 'comment:delete');
 
--- 创建默认管理员用户 (可选，生产环境建议删除)
--- INSERT INTO `users` (`username`, `password_hash`, `salt`, `nickname`, `status`) VALUES
--- ('admin', 'admin_hash_here', 'admin_salt_here', 'Administrator', 1);
-
 SET FOREIGN_KEY_CHECKS = 1;

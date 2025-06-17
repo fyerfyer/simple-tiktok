@@ -1,0 +1,52 @@
+networks:
+  tiktok-test-net:
+    driver: bridge
+
+volumes:
+  mysql-test-data:
+  redis-test-data:
+
+services:
+  # 测试数据库 - MySQL
+  mysql-test:
+    image: mysql:8.0
+    container_name: tiktok-mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: tiktok123
+      MYSQL_DATABASE: tiktok
+      MYSQL_USER: tiktok
+      MYSQL_PASSWORD: tiktok123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-test-data:/var/lib/mysql
+      - ./test-init.sql:/docker-entrypoint-initdb.d/test-init.sql
+    command: --server-id=1 --log-bin=mysql-bin --binlog-do-db=tiktok
+    networks:
+      - tiktok-test-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptiktok123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 测试缓存 - Redis
+  redis-test:
+    image: redis:7-alpine
+    container_name: tiktok-redis-test
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis-test-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - tiktok-test-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "tiktok123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

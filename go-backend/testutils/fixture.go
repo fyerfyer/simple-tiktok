@@ -51,6 +51,19 @@ type TestPermission struct {
 	UpdatedAt   time.Time
 }
 
+// TableName 指定表名
+func (TestRole) TableName() string {
+	return "roles"
+}
+
+func (TestUser) TableName() string {
+	return "users"
+}
+
+func (TestPermission) TableName() string {
+	return "permissions"
+}
+
 // TestDataManager 测试数据管理器
 type TestDataManager struct {
 	db    *TestDB
@@ -67,6 +80,13 @@ func NewTestDataManager(db *TestDB, redis *TestRedis) *TestDataManager {
 
 // CreateTestUsers 创建测试用户
 func (tdm *TestDataManager) CreateTestUsers(count int) ([]*TestUser, error) {
+	// 检查现有用户数量
+	var existingCount int64
+	err := tdm.db.DB.Model(&TestUser{}).Count(&existingCount).Error
+	if err != nil {
+		return nil, err
+	}
+
 	users := make([]*TestUser, 0, count)
 
 	for i := 0; i < count; i++ {
@@ -75,8 +95,10 @@ func (tdm *TestDataManager) CreateTestUsers(count int) ([]*TestUser, error) {
 			return nil, err
 		}
 
+		username := fmt.Sprintf("testuser%d", i+1)
+
 		user := &TestUser{
-			Username:        fmt.Sprintf("testuser%d", i+1),
+			Username:        username,
 			PasswordHash:    hash,
 			Salt:            salt,
 			Nickname:        fmt.Sprintf("Test User %d", i+1),
@@ -106,6 +128,13 @@ func (tdm *TestDataManager) CreateTestUsers(count int) ([]*TestUser, error) {
 
 // CreateTestRoles 创建测试角色
 func (tdm *TestDataManager) CreateTestRoles() ([]*TestRole, error) {
+	// 检查现有角色数量
+	var existingCount int64
+	err := tdm.db.DB.Model(&TestRole{}).Count(&existingCount).Error
+	if err != nil {
+		return nil, err
+	}
+
 	roles := []*TestRole{
 		{
 			Name:        "user",
@@ -142,6 +171,17 @@ func (tdm *TestDataManager) CreateTestRoles() ([]*TestRole, error) {
 
 // CreateTestPermissions 创建测试权限
 func (tdm *TestDataManager) CreateTestPermissions() ([]*TestPermission, error) {
+	// 检查现有权限数量
+	var existingCount int64
+	err := tdm.db.DB.Model(&TestPermission{}).Count(&existingCount).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 列出现有权限
+	var existingPerms []TestPermission
+	tdm.db.DB.Find(&existingPerms)
+
 	permissions := []*TestPermission{
 		{
 			Name:        "user:read",
@@ -199,7 +239,12 @@ func (tdm *TestDataManager) AssignRoleToUser(userID, roleID int64) error {
 		"created_at": time.Now(),
 	}
 
-	return tdm.db.DB.Table("user_roles").Create(userRole).Error
+	err := tdm.db.DB.Table("user_roles").Create(userRole).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CreateFollowRelation 创建关注关系
@@ -210,12 +255,46 @@ func (tdm *TestDataManager) CreateFollowRelation(userID, followUserID int64) err
 		"created_at":     time.Now(),
 	}
 
-	return tdm.db.DB.Table("user_follows").Create(follow).Error
+	err := tdm.db.DB.Table("user_follows").Create(follow).Error
+	if err != nil {
+		return err
+	}
+
+	// 清除相关缓存，确保缓存一致性
+	if tdm.redis != nil {
+		keys := []string{
+			fmt.Sprintf("follow:%d:%d", userID, followUserID),
+			fmt.Sprintf("follow:%d:*", userID),
+			fmt.Sprintf("follow:*:%d", followUserID),
+		}
+		// 忽略缓存清理错误，因为这是测试环境
+		tdm.redis.Del(keys...)
+	}
+
+	// 验证插入是否成功
+	var count int64
+	err = tdm.db.DB.Table("user_follows").
+		Where("user_id = ? AND follow_user_id = ?", userID, followUserID).
+		Count(&count).Error
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf("follow relation was not created successfully")
+	}
+
+	return nil
 }
 
 // SetTestCache 设置测试缓存
 func (tdm *TestDataManager) SetTestCache(key string, value interface{}, expiration time.Duration) error {
-	return tdm.redis.Set(key, value, expiration)
+	err := tdm.redis.Set(key, value, expiration)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // hashPassword 加密密码

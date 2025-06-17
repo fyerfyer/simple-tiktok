@@ -150,7 +150,12 @@ func (r *SessionRepo) AddTokenToBlacklist(ctx context.Context, tokenID string, e
 	}
 
 	expiry := time.Until(expiresAt)
-	r.authCache.AddTokenToBlacklist(ctx, tokenID, expiry)
+	r.log.Infof("Cache expiry duration for token %s: %v", tokenID, expiry)
+
+	// 只有当Token还未过期时才添加到缓存
+	if expiry > 0 {
+		r.authCache.AddTokenToBlacklist(ctx, tokenID, expiry)
+	}
 
 	return nil
 }
@@ -159,18 +164,30 @@ func (r *SessionRepo) IsTokenBlacklisted(ctx context.Context, tokenID string) (b
 	if r.authCache.IsTokenBlacklisted(ctx, tokenID) {
 		return true, nil
 	}
+	r.log.Infof("Token not found in cache blacklist: %s", tokenID)
 
 	var count int64
+	currentTime := time.Now()
+	r.log.Infof("Current time: %v", currentTime)
+
+	// 关键修改：只查询未过期的黑名单记录
 	err := r.data.db.WithContext(ctx).Model(&TokenBlacklist{}).
-		Where("token_id = ? AND expires_at > ?", tokenID, time.Now()).
+		Where("token_id = ? AND expires_at > ?", tokenID, currentTime).
 		Count(&count).Error
 
 	if err != nil {
+		r.log.Errorf("Database query error for token %s: %v", tokenID, err)
 		return false, err
 	}
 
+	r.log.Infof("Database query result for token %s: count=%d", tokenID, count)
+
 	isBlacklisted := count > 0
+	r.log.Infof("Token %s blacklisted status: %v", tokenID, isBlacklisted)
+
+	// 只有当Token确实在黑名单中且未过期时才添加到缓存
 	if isBlacklisted {
+		r.log.Infof("Adding token to cache blacklist: %s", tokenID)
 		r.authCache.AddTokenToBlacklist(ctx, tokenID, time.Hour)
 	}
 

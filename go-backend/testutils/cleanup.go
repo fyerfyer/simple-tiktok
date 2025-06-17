@@ -2,7 +2,6 @@ package testutils
 
 import (
 	"context"
-	"log"
 	"time"
 )
 
@@ -42,21 +41,17 @@ func (te *TestEnv) Setup() error {
 		return err
 	}
 
-	// 初始化基础数据
-	return te.initBaseData()
+	// 不再初始化基础数据，让每个测试自己创建需要的数据
+	return nil
 }
 
 // Cleanup 清理测试环境
 func (te *TestEnv) Cleanup() error {
 	// 清理数据库
-	if err := te.DB.TruncateAllTables(); err != nil {
-		log.Printf("Warning: failed to truncate tables: %v", err)
-	}
+	te.DB.TruncateAllTables()
 
 	// 清理Redis
-	if err := te.Redis.FlushDB(); err != nil {
-		log.Printf("Warning: failed to flush redis: %v", err)
-	}
+	te.Redis.FlushDB()
 
 	return nil
 }
@@ -69,23 +64,6 @@ func (te *TestEnv) Close() {
 	if te.Redis != nil {
 		te.Redis.Close()
 	}
-}
-
-// initBaseData 初始化基础数据
-func (te *TestEnv) initBaseData() error {
-	// 创建基础角色
-	_, err := te.DataManager.CreateTestRoles()
-	if err != nil {
-		return err
-	}
-
-	// 创建基础权限
-	_, err = te.DataManager.CreateTestPermissions()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // CleanupFunc 清理函数类型

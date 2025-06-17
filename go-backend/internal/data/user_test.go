@@ -51,7 +51,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 
 	user := &biz.User{
 		Username:        "testuser",
-		PasswordHash:    "password123",
+		PasswordHash:    "Password123!",
 		Nickname:        "Test User",
 		Avatar:          "https://example.com/avatar.jpg",
 		BackgroundImage: "https://example.com/bg.jpg",
@@ -222,7 +222,7 @@ func TestUserRepo_VerifyPassword(t *testing.T) {
 	// 创建用户
 	user := &biz.User{
 		Username:     "testuser",
-		PasswordHash: "password123",
+		PasswordHash: "password123!",
 		Nickname:     "Test User",
 	}
 
@@ -230,7 +230,7 @@ func TestUserRepo_VerifyPassword(t *testing.T) {
 	require.NoError(t, err)
 
 	// 验证正确密码
-	verified, err := repo.VerifyPassword(ctx, created.Username, "password123")
+	verified, err := repo.VerifyPassword(ctx, created.Username, "password123!")
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, verified.ID)
 
@@ -239,6 +239,6 @@ func TestUserRepo_VerifyPassword(t *testing.T) {
 	assert.Equal(t, biz.ErrPasswordError, err)
 
 	// 验证不存在的用户
-	_, err = repo.VerifyPassword(ctx, "nonexistent", "password123")
+	_, err = repo.VerifyPassword(ctx, "nonexistent", "password123!")
 	assert.Equal(t, biz.ErrUserNotFound, err)
 }
