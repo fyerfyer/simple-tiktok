@@ -20,76 +20,19 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func setupAuthService(t *testing.T) (*AuthService, *testutils.TestEnv, func()) {
-	env, cleanup, err := testutils.SetupTestWithCleanup()
-	require.NoError(t, err)
-
-	// 创建配置
-	config := &conf.Data{
-		Database: &conf.Data_Database{
-			Driver:          "mysql",
-			Source:          "tiktok:tiktok123@tcp(localhost:3306)/tiktok?charset=utf8mb4&parseTime=True&loc=Local",
-			MaxIdleConns:    10,
-			MaxOpenConns:    100,
-			ConnMaxLifetime: durationpb.New(time.Hour),
-		},
-		Redis: &conf.Data_Redis{
-			Addr:         "localhost:6380",
-			Password:     "tiktok123",
-			Db:           1,
-			DialTimeout:  durationpb.New(5 * time.Second),
-			ReadTimeout:  durationpb.New(3 * time.Second),
-			WriteTimeout: durationpb.New(3 * time.Second),
-			PoolSize:     100,
-		},
-	}
-
-	// 创建Data实例
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     config.Redis.Addr,
-		Password: config.Redis.Password,
-		DB:       int(config.Redis.Db),
-	})
-
-	d, cleanup, err := data.NewData(config, log.DefaultLogger)
-	assert.NoError(t, err, "Failed to create data instance")
-
-	// 创建缓存
-	multiCache := pkgcache.NewMultiLevelCache(rdb, &pkgcache.CacheConfig{
-		EnableL1: true,
-		EnableL2: true,
-	})
-	userCache := cache.NewUserCache(multiCache, log.DefaultLogger)
-	authCache := cache.NewAuthCache(multiCache, log.DefaultLogger)
-
-	// 创建仓储
-	passwordMgr := auth.NewPasswordManager()
-	userRepo := data.NewUserRepo(d, userCache, passwordMgr, log.DefaultLogger)
-	sessionRepo := data.NewSessionRepo(d, authCache, log.DefaultLogger)
-
-	// 创建用例
-	jwtManager := auth.NewJWTManager("test-secret", time.Hour)
-	sessionMgr := auth.NewMemorySessionManager()
-	authUc := biz.NewAuthUsecase(sessionRepo, userRepo, jwtManager, sessionMgr, log.DefaultLogger)
-
-	// 创建服务
-	service := NewAuthService(authUc, jwtManager, log.DefaultLogger)
-
-	return service, env, cleanup
-}
-
 func TestAuthService_RefreshToken(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("RefreshToken_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成Token对
 		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
 		tokenPair, err := jwtManager.GenerateTokenPair(testUser.ID, testUser.Username)
@@ -112,6 +55,11 @@ func TestAuthService_RefreshToken(t *testing.T) {
 	})
 
 	t.Run("RefreshToken_InvalidToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
 		invalidToken := "invalid-refresh-token"
 
 		tokenPair, err := service.RefreshToken(ctx, invalidToken)
@@ -121,6 +69,17 @@ func TestAuthService_RefreshToken(t *testing.T) {
 	})
 
 	t.Run("RefreshToken_ExpiredToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成过期Token对
 		jwtManager := auth.NewJWTManager("test-secret", -time.Hour) // 负数表示已过期
 		tokenPair, err := jwtManager.GenerateTokenPair(testUser.ID, testUser.Username)
@@ -134,17 +93,18 @@ func TestAuthService_RefreshToken(t *testing.T) {
 }
 
 func TestAuthService_Logout(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("Logout_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成Token
 		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
 		accessToken, err := jwtManager.GenerateToken(testUser.ID, testUser.Username)
@@ -171,6 +131,17 @@ func TestAuthService_Logout(t *testing.T) {
 	})
 
 	t.Run("Logout_WithoutRefreshToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成Token
 		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
 		accessToken, err := jwtManager.GenerateToken(testUser.ID, testUser.Username)
@@ -184,17 +155,18 @@ func TestAuthService_Logout(t *testing.T) {
 }
 
 func TestAuthService_RevokeToken(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("RevokeToken_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成Token
 		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
 		token, err := jwtManager.GenerateToken(testUser.ID, testUser.Username)
@@ -207,6 +179,11 @@ func TestAuthService_RevokeToken(t *testing.T) {
 	})
 
 	t.Run("RevokeToken_InvalidToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
 		invalidToken := "invalid-token"
 
 		err := service.RevokeToken(ctx, invalidToken)
@@ -216,17 +193,18 @@ func TestAuthService_RevokeToken(t *testing.T) {
 }
 
 func TestAuthService_VerifyTokenInternal(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("VerifyTokenInternal_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成Token
 		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
 		token, err := jwtManager.GenerateToken(testUser.ID, testUser.Username)
@@ -242,6 +220,11 @@ func TestAuthService_VerifyTokenInternal(t *testing.T) {
 	})
 
 	t.Run("VerifyTokenInternal_InvalidToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
 		invalidToken := "invalid-token"
 
 		claims, err := service.VerifyTokenInternal(ctx, invalidToken)
@@ -251,6 +234,17 @@ func TestAuthService_VerifyTokenInternal(t *testing.T) {
 	})
 
 	t.Run("VerifyTokenInternal_ExpiredToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成过期Token
 		jwtManager := auth.NewJWTManager("test-secret", -time.Hour)
 		token, err := jwtManager.GenerateToken(testUser.ID, testUser.Username)
@@ -264,12 +258,12 @@ func TestAuthService_VerifyTokenInternal(t *testing.T) {
 }
 
 func TestAuthService_CheckTokenBlacklist(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
 	t.Run("CheckTokenBlacklist_NotBlacklisted", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
 		tokenID := "clean-token-id"
 
 		isBlacklisted, err := service.CheckTokenBlacklist(ctx, tokenID)
@@ -279,6 +273,11 @@ func TestAuthService_CheckTokenBlacklist(t *testing.T) {
 	})
 
 	t.Run("CheckTokenBlacklist_IsBlacklisted", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
 		tokenID := "blacklisted-token-id"
 
 		// 添加到黑名单
@@ -294,21 +293,22 @@ func TestAuthService_CheckTokenBlacklist(t *testing.T) {
 }
 
 func TestAuthService_GetUserSession(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("GetUserSession_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 创建会话
 		refreshToken := "test-refresh-token"
 		expiresAt := time.Now().Add(time.Hour)
-		err := env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
+		err = env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
 			testUser.ID, refreshToken, expiresAt, time.Now()).Error
 		require.NoError(t, err)
 
@@ -319,16 +319,33 @@ func TestAuthService_GetUserSession(t *testing.T) {
 	})
 
 	t.Run("GetUserSession_NotFound", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
 		err := service.GetUserSession(ctx, 99999)
 
 		assert.Error(t, err)
 	})
 
 	t.Run("GetUserSession_Expired", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 创建过期会话
 		refreshToken := "expired-refresh-token"
 		expiresAt := time.Now().Add(-time.Hour) // 已过期
-		err := env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
+		err = env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
 			testUser.ID, refreshToken, expiresAt, time.Now()).Error
 		require.NoError(t, err)
 
@@ -339,22 +356,23 @@ func TestAuthService_GetUserSession(t *testing.T) {
 }
 
 func TestAuthService_ValidateSession(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("ValidateSession_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		refreshToken := "valid-refresh-token"
 		expiresAt := time.Now().Add(time.Hour)
 
 		// 创建会话
-		err := env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
+		err = env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
 			testUser.ID, refreshToken, expiresAt, time.Now()).Error
 		require.NoError(t, err)
 
@@ -366,12 +384,23 @@ func TestAuthService_ValidateSession(t *testing.T) {
 	})
 
 	t.Run("ValidateSession_TokenMismatch", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		correctToken := "correct-token"
 		wrongToken := "wrong-token"
 		expiresAt := time.Now().Add(time.Hour)
 
 		// 创建会话
-		err := env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
+		err = env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
 			testUser.ID, correctToken, expiresAt, time.Now()).Error
 		require.NoError(t, err)
 
@@ -383,6 +412,12 @@ func TestAuthService_ValidateSession(t *testing.T) {
 	})
 
 	t.Run("ValidateSession_SessionNotFound", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
 		isValid, err := service.ValidateSession(ctx, 99999, "any-token")
 
 		assert.Error(t, err)
@@ -391,21 +426,22 @@ func TestAuthService_ValidateSession(t *testing.T) {
 }
 
 func TestAuthService_RevokeAllUserTokens(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("RevokeAllUserTokens_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 创建会话
 		refreshToken := "test-refresh-token"
 		expiresAt := time.Now().Add(time.Hour)
-		err := env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
+		err = env.DB.DB.Exec("INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at) VALUES (?, ?, ?, ?)",
 			testUser.ID, refreshToken, expiresAt, time.Now()).Error
 		require.NoError(t, err)
 
@@ -423,17 +459,18 @@ func TestAuthService_RevokeAllUserTokens(t *testing.T) {
 }
 
 func TestAuthService_GenerateTokenPair(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("GenerateTokenPair_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		tokenPair, err := service.GenerateTokenPair(ctx, testUser.ID, testUser.Username)
 
 		require.NoError(t, err)
@@ -446,17 +483,18 @@ func TestAuthService_GenerateTokenPair(t *testing.T) {
 }
 
 func TestAuthService_GetTokenExpiry(t *testing.T) {
-	service, env, cleanup := setupAuthService(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	// 创建测试用户
-	users, err := env.DataManager.CreateTestUsers(1)
-	require.NoError(t, err)
-	testUser := users[0]
-
 	t.Run("GetTokenExpiry_Success", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, env, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
+
+		// 创建测试用户
+		users, err := env.DataManager.CreateTestUsers(1)
+		require.NoError(t, err)
+		testUser := users[0]
+
 		// 生成Token
 		jwtManager := auth.NewJWTManager("test-secret", time.Hour)
 		token, err := jwtManager.GenerateToken(testUser.ID, testUser.Username)
@@ -470,6 +508,11 @@ func TestAuthService_GetTokenExpiry(t *testing.T) {
 	})
 
 	t.Run("GetTokenExpiry_InvalidToken", func(t *testing.T) {
+		// 创建独立的服务和环境
+		service, _, cleanup := setupAuthServiceForTest(t)
+		defer cleanup()
+
+		ctx := context.Background()
 		invalidToken := "invalid-token"
 
 		expiry, err := service.GetTokenExpiry(ctx, invalidToken)
@@ -477,4 +520,85 @@ func TestAuthService_GetTokenExpiry(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, int64(0), expiry)
 	})
+}
+
+// setupAuthServiceForTest 为每个测试创建独立的服务实例
+func setupAuthServiceForTest(t *testing.T) (*AuthService, *testutils.TestEnv, func()) {
+	env, cleanup, err := testutils.SetupTestWithCleanup()
+	require.NoError(t, err)
+
+	// 创建配置
+	config := &conf.Data{
+		Database: &conf.Data_Database{
+			Driver:          "mysql",
+			Source:          "tiktok:tiktok123@tcp(localhost:3307)/tiktok?charset=utf8mb4&parseTime=True&loc=Local",
+			MaxIdleConns:    10,
+			MaxOpenConns:    100,
+			ConnMaxLifetime: durationpb.New(time.Hour),
+		},
+		Redis: &conf.Data_Redis{
+			Addr:         "localhost:6381",
+			Password:     "tiktok123",
+			Db:           1,
+			DialTimeout:  durationpb.New(5 * time.Second),
+			ReadTimeout:  durationpb.New(3 * time.Second),
+			WriteTimeout: durationpb.New(3 * time.Second),
+			PoolSize:     100,
+		},
+	}
+
+	// 创建Redis客户端
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     config.Redis.Addr,
+		Password: config.Redis.Password,
+		DB:       int(config.Redis.Db),
+	})
+
+	// 重要：清理这个Redis客户端的数据
+	ctx := context.Background()
+	rdb.FlushDB(ctx)
+
+	// 清理数据库
+	env.DB.TruncateTable("user_sessions")
+	env.DB.TruncateTable("token_blacklist")
+
+	// 创建Data实例
+	d, dataCleanup, err := data.NewData(config, log.DefaultLogger)
+	require.NoError(t, err)
+
+	// 创建缓存
+	multiCache := pkgcache.NewMultiLevelCache(rdb, &pkgcache.CacheConfig{
+		EnableL1: true,
+		EnableL2: true,
+	})
+	userCache := cache.NewUserCache(multiCache, log.DefaultLogger)
+	authCache := cache.NewAuthCache(multiCache, log.DefaultLogger)
+
+	// 创建仓储
+	passwordMgr := auth.NewPasswordManager()
+	userRepo := data.NewUserRepo(d, userCache, passwordMgr, log.DefaultLogger)
+	sessionRepo := data.NewSessionRepo(d, authCache, log.DefaultLogger)
+
+	// 创建用例
+	jwtManager := auth.NewJWTManager("test-secret", time.Hour)
+	sessionMgr := auth.NewMemorySessionManager()
+	authUc := biz.NewAuthUsecase(sessionRepo, userRepo, jwtManager, sessionMgr, log.DefaultLogger)
+
+	// 创建服务
+	service := NewAuthService(authUc, jwtManager, log.DefaultLogger)
+
+	cleanupFunc := func() {
+		// 清理Redis数据
+		rdb.FlushDB(ctx)
+		rdb.Close()
+
+		// 清理数据库
+		env.DB.TruncateTable("user_sessions")
+		env.DB.TruncateTable("token_blacklist")
+
+		dataCleanup()
+		cleanup()
+	}
+
+	return service, env, cleanupFunc
 }

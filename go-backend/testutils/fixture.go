@@ -178,10 +178,6 @@ func (tdm *TestDataManager) CreateTestPermissions() ([]*TestPermission, error) {
 		return nil, err
 	}
 
-	// 列出现有权限
-	var existingPerms []TestPermission
-	tdm.db.DB.Find(&existingPerms)
-
 	permissions := []*TestPermission{
 		{
 			Name:        "user:read",
@@ -197,6 +193,15 @@ func (tdm *TestDataManager) CreateTestPermissions() ([]*TestPermission, error) {
 			Resource:    "/user",
 			Action:      "PUT",
 			Description: "Update user information",
+			Status:      1,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+		{
+			Name:        "video:read",
+			Resource:    "/video",
+			Action:      "GET",
+			Description: "Read video",
 			Status:      1,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),

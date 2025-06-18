@@ -131,17 +131,30 @@ func (r *PermissionRepo) GetUserPermissions(ctx context.Context, userID int64) (
 }
 
 func (r *PermissionRepo) HasPermission(ctx context.Context, userID int64, resource, action string) (bool, error) {
+	r.log.WithContext(ctx).Infof("DEBUG: HasPermission called for user: %d, resource: %s, action: %s", userID, resource, action)
+
 	permissions, err := r.GetUserPermissions(ctx, userID)
 	if err != nil {
+		r.log.WithContext(ctx).Errorf("DEBUG: GetUserPermissions failed: %v", err)
 		return false, err
 	}
 
-	for _, perm := range permissions {
-		if perm.Match(resource, action) {
+	r.log.WithContext(ctx).Infof("DEBUG: User %d has %d permissions", userID, len(permissions))
+
+	for i, perm := range permissions {
+		r.log.WithContext(ctx).Infof("DEBUG: Permission %d: name=%s, resource=%s, action=%s, status=%d",
+			i+1, perm.Name, perm.Resource, perm.Action, perm.Status)
+
+		matches := perm.Match(resource, action)
+		r.log.WithContext(ctx).Infof("DEBUG: Permission %s matches %s %s: %v", perm.Name, resource, action, matches)
+
+		if matches {
+			r.log.WithContext(ctx).Infof("DEBUG: Permission match found: %s", perm.Name)
 			return true, nil
 		}
 	}
 
+	r.log.WithContext(ctx).Infof("DEBUG: No matching permissions found for %s %s", resource, action)
 	return false, nil
 }
 

@@ -131,7 +131,7 @@ func (s *PermissionService) InitUserRole(ctx context.Context, userID int64) erro
 
 // CanAccessVideo 检查是否可以访问视频
 func (s *PermissionService) CanAccessVideo(ctx context.Context, userID int64, videoID int64) (bool, error) {
-	// 简化实现：普通用户可以查看视频，管理员可以删除视频
+	// TODO: 简化实现：普通用户可以查看视频，管理员可以删除视频
 	canView, err := s.CheckVideoPermission(ctx, userID, "GET")
 	if err != nil {
 		return false, err
