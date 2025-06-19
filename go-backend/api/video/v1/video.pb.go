@@ -1494,6 +1494,794 @@ func (x *UpdateVideoStatsRequest) GetUserId() int64 {
 	return 0
 }
 
+// 初始化分片上传请求
+type InitiateMultipartUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	FileSize      int64                  `protobuf:"varint,3,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
+	ContentType   string                 `protobuf:"bytes,4,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	Title         string                 `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InitiateMultipartUploadRequest) Reset() {
+	*x = InitiateMultipartUploadRequest{}
+	mi := &file_video_v1_video_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitiateMultipartUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitiateMultipartUploadRequest) ProtoMessage() {}
+
+func (x *InitiateMultipartUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitiateMultipartUploadRequest.ProtoReflect.Descriptor instead.
+func (*InitiateMultipartUploadRequest) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *InitiateMultipartUploadRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *InitiateMultipartUploadRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *InitiateMultipartUploadRequest) GetFileSize() int64 {
+	if x != nil {
+		return x.FileSize
+	}
+	return 0
+}
+
+func (x *InitiateMultipartUploadRequest) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *InitiateMultipartUploadRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+// 初始化分片上传响应
+type InitiateMultipartUploadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Base          *v1.BaseResponse       `protobuf:"bytes,1,opt,name=base,proto3" json:"base,omitempty"`
+	Data          *MultipartUploadInfo   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InitiateMultipartUploadResponse) Reset() {
+	*x = InitiateMultipartUploadResponse{}
+	mi := &file_video_v1_video_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitiateMultipartUploadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitiateMultipartUploadResponse) ProtoMessage() {}
+
+func (x *InitiateMultipartUploadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitiateMultipartUploadResponse.ProtoReflect.Descriptor instead.
+func (*InitiateMultipartUploadResponse) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *InitiateMultipartUploadResponse) GetBase() *v1.BaseResponse {
+	if x != nil {
+		return x.Base
+	}
+	return nil
+}
+
+func (x *InitiateMultipartUploadResponse) GetData() *MultipartUploadInfo {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// 分片上传信息
+type MultipartUploadInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UploadId      string                 `protobuf:"bytes,1,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	ChunkSize     int64                  `protobuf:"varint,2,opt,name=chunk_size,json=chunkSize,proto3" json:"chunk_size,omitempty"`
+	TotalParts    int32                  `protobuf:"varint,3,opt,name=total_parts,json=totalParts,proto3" json:"total_parts,omitempty"`
+	UploadUrls    map[string]string      `protobuf:"bytes,4,rep,name=upload_urls,json=uploadUrls,proto3" json:"upload_urls,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 分片上传URL（如果需要）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MultipartUploadInfo) Reset() {
+	*x = MultipartUploadInfo{}
+	mi := &file_video_v1_video_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MultipartUploadInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MultipartUploadInfo) ProtoMessage() {}
+
+func (x *MultipartUploadInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MultipartUploadInfo.ProtoReflect.Descriptor instead.
+func (*MultipartUploadInfo) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *MultipartUploadInfo) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+func (x *MultipartUploadInfo) GetChunkSize() int64 {
+	if x != nil {
+		return x.ChunkSize
+	}
+	return 0
+}
+
+func (x *MultipartUploadInfo) GetTotalParts() int32 {
+	if x != nil {
+		return x.TotalParts
+	}
+	return 0
+}
+
+func (x *MultipartUploadInfo) GetUploadUrls() map[string]string {
+	if x != nil {
+		return x.UploadUrls
+	}
+	return nil
+}
+
+// 上传分片请求
+type UploadPartRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	UploadId      string                 `protobuf:"bytes,2,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	PartNumber    int32                  `protobuf:"varint,3,opt,name=part_number,json=partNumber,proto3" json:"part_number,omitempty"`
+	Data          []byte                 `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
+	Size          int64                  `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadPartRequest) Reset() {
+	*x = UploadPartRequest{}
+	mi := &file_video_v1_video_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadPartRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadPartRequest) ProtoMessage() {}
+
+func (x *UploadPartRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadPartRequest.ProtoReflect.Descriptor instead.
+func (*UploadPartRequest) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *UploadPartRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *UploadPartRequest) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+func (x *UploadPartRequest) GetPartNumber() int32 {
+	if x != nil {
+		return x.PartNumber
+	}
+	return 0
+}
+
+func (x *UploadPartRequest) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *UploadPartRequest) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+// 上传分片响应
+type UploadPartResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Base          *v1.BaseResponse       `protobuf:"bytes,1,opt,name=base,proto3" json:"base,omitempty"`
+	Data          *PartInfo              `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadPartResponse) Reset() {
+	*x = UploadPartResponse{}
+	mi := &file_video_v1_video_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadPartResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadPartResponse) ProtoMessage() {}
+
+func (x *UploadPartResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadPartResponse.ProtoReflect.Descriptor instead.
+func (*UploadPartResponse) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UploadPartResponse) GetBase() *v1.BaseResponse {
+	if x != nil {
+		return x.Base
+	}
+	return nil
+}
+
+func (x *UploadPartResponse) GetData() *PartInfo {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// 分片信息
+type PartInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PartNumber    int32                  `protobuf:"varint,1,opt,name=part_number,json=partNumber,proto3" json:"part_number,omitempty"`
+	Etag          string                 `protobuf:"bytes,2,opt,name=etag,proto3" json:"etag,omitempty"`
+	Size          int64                  `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PartInfo) Reset() {
+	*x = PartInfo{}
+	mi := &file_video_v1_video_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PartInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartInfo) ProtoMessage() {}
+
+func (x *PartInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PartInfo.ProtoReflect.Descriptor instead.
+func (*PartInfo) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *PartInfo) GetPartNumber() int32 {
+	if x != nil {
+		return x.PartNumber
+	}
+	return 0
+}
+
+func (x *PartInfo) GetEtag() string {
+	if x != nil {
+		return x.Etag
+	}
+	return ""
+}
+
+func (x *PartInfo) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+// 完成分片上传请求
+type CompleteMultipartUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	UploadId      string                 `protobuf:"bytes,2,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	Parts         []*PartInfo            `protobuf:"bytes,3,rep,name=parts,proto3" json:"parts,omitempty"`
+	Title         string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteMultipartUploadRequest) Reset() {
+	*x = CompleteMultipartUploadRequest{}
+	mi := &file_video_v1_video_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteMultipartUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteMultipartUploadRequest) ProtoMessage() {}
+
+func (x *CompleteMultipartUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteMultipartUploadRequest.ProtoReflect.Descriptor instead.
+func (*CompleteMultipartUploadRequest) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *CompleteMultipartUploadRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *CompleteMultipartUploadRequest) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+func (x *CompleteMultipartUploadRequest) GetParts() []*PartInfo {
+	if x != nil {
+		return x.Parts
+	}
+	return nil
+}
+
+func (x *CompleteMultipartUploadRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+// 取消分片上传请求
+type AbortMultipartUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	UploadId      string                 `protobuf:"bytes,2,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AbortMultipartUploadRequest) Reset() {
+	*x = AbortMultipartUploadRequest{}
+	mi := &file_video_v1_video_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AbortMultipartUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AbortMultipartUploadRequest) ProtoMessage() {}
+
+func (x *AbortMultipartUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AbortMultipartUploadRequest.ProtoReflect.Descriptor instead.
+func (*AbortMultipartUploadRequest) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *AbortMultipartUploadRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AbortMultipartUploadRequest) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+// 列出已上传分片请求
+type ListUploadedPartsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	UploadId      string                 `protobuf:"bytes,2,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUploadedPartsRequest) Reset() {
+	*x = ListUploadedPartsRequest{}
+	mi := &file_video_v1_video_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUploadedPartsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUploadedPartsRequest) ProtoMessage() {}
+
+func (x *ListUploadedPartsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUploadedPartsRequest.ProtoReflect.Descriptor instead.
+func (*ListUploadedPartsRequest) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ListUploadedPartsRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *ListUploadedPartsRequest) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+// 列出已上传分片响应
+type ListUploadedPartsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Base          *v1.BaseResponse       `protobuf:"bytes,1,opt,name=base,proto3" json:"base,omitempty"`
+	Data          *ListUploadedPartsData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUploadedPartsResponse) Reset() {
+	*x = ListUploadedPartsResponse{}
+	mi := &file_video_v1_video_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUploadedPartsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUploadedPartsResponse) ProtoMessage() {}
+
+func (x *ListUploadedPartsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUploadedPartsResponse.ProtoReflect.Descriptor instead.
+func (*ListUploadedPartsResponse) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *ListUploadedPartsResponse) GetBase() *v1.BaseResponse {
+	if x != nil {
+		return x.Base
+	}
+	return nil
+}
+
+func (x *ListUploadedPartsResponse) GetData() *ListUploadedPartsData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// 已上传分片数据
+type ListUploadedPartsData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Parts         []*PartInfo            `protobuf:"bytes,1,rep,name=parts,proto3" json:"parts,omitempty"`
+	TotalParts    int32                  `protobuf:"varint,2,opt,name=total_parts,json=totalParts,proto3" json:"total_parts,omitempty"`
+	UploadedSize  int64                  `protobuf:"varint,3,opt,name=uploaded_size,json=uploadedSize,proto3" json:"uploaded_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUploadedPartsData) Reset() {
+	*x = ListUploadedPartsData{}
+	mi := &file_video_v1_video_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUploadedPartsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUploadedPartsData) ProtoMessage() {}
+
+func (x *ListUploadedPartsData) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUploadedPartsData.ProtoReflect.Descriptor instead.
+func (*ListUploadedPartsData) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ListUploadedPartsData) GetParts() []*PartInfo {
+	if x != nil {
+		return x.Parts
+	}
+	return nil
+}
+
+func (x *ListUploadedPartsData) GetTotalParts() int32 {
+	if x != nil {
+		return x.TotalParts
+	}
+	return 0
+}
+
+func (x *ListUploadedPartsData) GetUploadedSize() int64 {
+	if x != nil {
+		return x.UploadedSize
+	}
+	return 0
+}
+
+// 扩展现有的UploadProgress消息（如果需要更详细的进度信息）
+type UploadProgressDetail struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	UploadId       string                 `protobuf:"bytes,1,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	Progress       int32                  `protobuf:"varint,2,opt,name=progress,proto3" json:"progress,omitempty"`
+	Status         UploadStatus           `protobuf:"varint,3,opt,name=status,proto3,enum=video.v1.UploadStatus" json:"status,omitempty"`
+	TotalSize      int64                  `protobuf:"varint,4,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
+	UploadedSize   int64                  `protobuf:"varint,5,opt,name=uploaded_size,json=uploadedSize,proto3" json:"uploaded_size,omitempty"`
+	ErrorMessage   string                 `protobuf:"bytes,6,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	EstimatedTime  int64                  `protobuf:"varint,7,opt,name=estimated_time,json=estimatedTime,proto3" json:"estimated_time,omitempty"`
+	CompletedParts []*PartInfo            `protobuf:"bytes,8,rep,name=completed_parts,json=completedParts,proto3" json:"completed_parts,omitempty"` // 已完成的分片
+	TotalParts     int32                  `protobuf:"varint,9,opt,name=total_parts,json=totalParts,proto3" json:"total_parts,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UploadProgressDetail) Reset() {
+	*x = UploadProgressDetail{}
+	mi := &file_video_v1_video_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadProgressDetail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadProgressDetail) ProtoMessage() {}
+
+func (x *UploadProgressDetail) ProtoReflect() protoreflect.Message {
+	mi := &file_video_v1_video_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadProgressDetail.ProtoReflect.Descriptor instead.
+func (*UploadProgressDetail) Descriptor() ([]byte, []int) {
+	return file_video_v1_video_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *UploadProgressDetail) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+func (x *UploadProgressDetail) GetProgress() int32 {
+	if x != nil {
+		return x.Progress
+	}
+	return 0
+}
+
+func (x *UploadProgressDetail) GetStatus() UploadStatus {
+	if x != nil {
+		return x.Status
+	}
+	return UploadStatus_UPLOAD_STATUS_UNKNOWN
+}
+
+func (x *UploadProgressDetail) GetTotalSize() int64 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
+}
+
+func (x *UploadProgressDetail) GetUploadedSize() int64 {
+	if x != nil {
+		return x.UploadedSize
+	}
+	return 0
+}
+
+func (x *UploadProgressDetail) GetErrorMessage() string {
+	if x != nil {
+		return x.ErrorMessage
+	}
+	return ""
+}
+
+func (x *UploadProgressDetail) GetEstimatedTime() int64 {
+	if x != nil {
+		return x.EstimatedTime
+	}
+	return 0
+}
+
+func (x *UploadProgressDetail) GetCompletedParts() []*PartInfo {
+	if x != nil {
+		return x.CompletedParts
+	}
+	return nil
+}
+
+func (x *UploadProgressDetail) GetTotalParts() int32 {
+	if x != nil {
+		return x.TotalParts
+	}
+	return 0
+}
+
 var File_video_v1_video_proto protoreflect.FileDescriptor
 
 const file_video_v1_video_proto_rawDesc = "" +
@@ -1594,7 +2382,73 @@ const file_video_v1_video_proto_rawDesc = "" +
 	"\bvideo_id\x18\x01 \x01(\x03R\avideoId\x122\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1e.video.v1.UpdateVideoStatsTypeR\x04type\x12\x14\n" +
 	"\x05count\x18\x03 \x01(\x03R\x05count\x12\x17\n" +
-	"\auser_id\x18\x04 \x01(\x03R\x06userId*\x9b\x01\n" +
+	"\auser_id\x18\x04 \x01(\x03R\x06userId\"\xa8\x01\n" +
+	"\x1eInitiateMultipartUploadRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1b\n" +
+	"\tfile_size\x18\x03 \x01(\x03R\bfileSize\x12!\n" +
+	"\fcontent_type\x18\x04 \x01(\tR\vcontentType\x12\x14\n" +
+	"\x05title\x18\x05 \x01(\tR\x05title\"\x81\x01\n" +
+	"\x1fInitiateMultipartUploadResponse\x12+\n" +
+	"\x04base\x18\x01 \x01(\v2\x17.common.v1.BaseResponseR\x04base\x121\n" +
+	"\x04data\x18\x02 \x01(\v2\x1d.video.v1.MultipartUploadInfoR\x04data\"\x81\x02\n" +
+	"\x13MultipartUploadInfo\x12\x1b\n" +
+	"\tupload_id\x18\x01 \x01(\tR\buploadId\x12\x1d\n" +
+	"\n" +
+	"chunk_size\x18\x02 \x01(\x03R\tchunkSize\x12\x1f\n" +
+	"\vtotal_parts\x18\x03 \x01(\x05R\n" +
+	"totalParts\x12N\n" +
+	"\vupload_urls\x18\x04 \x03(\v2-.video.v1.MultipartUploadInfo.UploadUrlsEntryR\n" +
+	"uploadUrls\x1a=\n" +
+	"\x0fUploadUrlsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8f\x01\n" +
+	"\x11UploadPartRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1b\n" +
+	"\tupload_id\x18\x02 \x01(\tR\buploadId\x12\x1f\n" +
+	"\vpart_number\x18\x03 \x01(\x05R\n" +
+	"partNumber\x12\x12\n" +
+	"\x04data\x18\x04 \x01(\fR\x04data\x12\x12\n" +
+	"\x04size\x18\x05 \x01(\x03R\x04size\"i\n" +
+	"\x12UploadPartResponse\x12+\n" +
+	"\x04base\x18\x01 \x01(\v2\x17.common.v1.BaseResponseR\x04base\x12&\n" +
+	"\x04data\x18\x02 \x01(\v2\x12.video.v1.PartInfoR\x04data\"S\n" +
+	"\bPartInfo\x12\x1f\n" +
+	"\vpart_number\x18\x01 \x01(\x05R\n" +
+	"partNumber\x12\x12\n" +
+	"\x04etag\x18\x02 \x01(\tR\x04etag\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\"\x93\x01\n" +
+	"\x1eCompleteMultipartUploadRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1b\n" +
+	"\tupload_id\x18\x02 \x01(\tR\buploadId\x12(\n" +
+	"\x05parts\x18\x03 \x03(\v2\x12.video.v1.PartInfoR\x05parts\x12\x14\n" +
+	"\x05title\x18\x04 \x01(\tR\x05title\"P\n" +
+	"\x1bAbortMultipartUploadRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1b\n" +
+	"\tupload_id\x18\x02 \x01(\tR\buploadId\"M\n" +
+	"\x18ListUploadedPartsRequest\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1b\n" +
+	"\tupload_id\x18\x02 \x01(\tR\buploadId\"}\n" +
+	"\x19ListUploadedPartsResponse\x12+\n" +
+	"\x04base\x18\x01 \x01(\v2\x17.common.v1.BaseResponseR\x04base\x123\n" +
+	"\x04data\x18\x02 \x01(\v2\x1f.video.v1.ListUploadedPartsDataR\x04data\"\x87\x01\n" +
+	"\x15ListUploadedPartsData\x12(\n" +
+	"\x05parts\x18\x01 \x03(\v2\x12.video.v1.PartInfoR\x05parts\x12\x1f\n" +
+	"\vtotal_parts\x18\x02 \x01(\x05R\n" +
+	"totalParts\x12#\n" +
+	"\ruploaded_size\x18\x03 \x01(\x03R\fuploadedSize\"\xed\x02\n" +
+	"\x14UploadProgressDetail\x12\x1b\n" +
+	"\tupload_id\x18\x01 \x01(\tR\buploadId\x12\x1a\n" +
+	"\bprogress\x18\x02 \x01(\x05R\bprogress\x12.\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x16.video.v1.UploadStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x04 \x01(\x03R\ttotalSize\x12#\n" +
+	"\ruploaded_size\x18\x05 \x01(\x03R\fuploadedSize\x12#\n" +
+	"\rerror_message\x18\x06 \x01(\tR\ferrorMessage\x12%\n" +
+	"\x0eestimated_time\x18\a \x01(\x03R\restimatedTime\x12;\n" +
+	"\x0fcompleted_parts\x18\b \x03(\v2\x12.video.v1.PartInfoR\x0ecompletedParts\x12\x1f\n" +
+	"\vtotal_parts\x18\t \x01(\x05R\n" +
+	"totalParts*\x9b\x01\n" +
 	"\fUploadStatus\x12\x19\n" +
 	"\x15UPLOAD_STATUS_UNKNOWN\x10\x00\x12\x1b\n" +
 	"\x17UPLOAD_STATUS_UPLOADING\x10\x01\x12\x1c\n" +
@@ -1606,7 +2460,7 @@ const file_video_v1_video_proto_rawDesc = "" +
 	"!UPDATE_VIDEO_STATS_FAVORITE_COUNT\x10\x01\x12$\n" +
 	" UPDATE_VIDEO_STATS_COMMENT_COUNT\x10\x02\x12!\n" +
 	"\x1dUPDATE_VIDEO_STATS_PLAY_COUNT\x10\x03\x12\"\n" +
-	"\x1eUPDATE_VIDEO_STATS_SHARE_COUNT\x10\x042\xcf\a\n" +
+	"\x1eUPDATE_VIDEO_STATS_SHARE_COUNT\x10\x042\x8b\r\n" +
 	"\fVideoService\x12T\n" +
 	"\aGetFeed\x12\x18.video.v1.GetFeedRequest\x1a\x19.video.v1.GetFeedResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/douyin/feed\x12\x8a\x01\n" +
 	"\fPublishVideo\x12\x1d.video.v1.PublishVideoRequest\x1a\x1e.video.v1.PublishVideoResponse\";\x82\xd3\xe4\x93\x025:\x01*Z\x18\"\x16/douyin/publish/action\"\x16/douyin/publish/action\x12v\n" +
@@ -1616,7 +2470,13 @@ const file_video_v1_video_proto_rawDesc = "" +
 	"\x11GetUploadProgress\x12\".video.v1.GetUploadProgressRequest\x1a#.video.v1.GetUploadProgressResponse\"+\x82\xd3\xe4\x93\x02%\x12#/douyin/upload/progress/{upload_id}\x12M\n" +
 	"\fGetVideoInfo\x12\x1d.video.v1.GetVideoInfoRequest\x1a\x1e.video.v1.GetVideoInfoResponse\x12P\n" +
 	"\rGetVideosInfo\x12\x1e.video.v1.GetVideosInfoRequest\x1a\x1f.video.v1.GetVideosInfoResponse\x12M\n" +
-	"\x10UpdateVideoStats\x12!.video.v1.UpdateVideoStatsRequest\x1a\x16.google.protobuf.EmptyB\x1cZ\x1ago-backend/api/video/v1;v1b\x06proto3"
+	"\x10UpdateVideoStats\x12!.video.v1.UpdateVideoStatsRequest\x1a\x16.google.protobuf.Empty\x12\x9c\x01\n" +
+	"\x17InitiateMultipartUpload\x12(.video.v1.InitiateMultipartUploadRequest\x1a).video.v1.InitiateMultipartUploadResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/douyin/upload/multipart/initiate\x12q\n" +
+	"\n" +
+	"UploadPart\x12\x1b.video.v1.UploadPartRequest\x1a\x1c.video.v1.UploadPartResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/douyin/upload/multipart/part\x12\x91\x01\n" +
+	"\x17CompleteMultipartUpload\x12(.video.v1.CompleteMultipartUploadRequest\x1a\x1e.video.v1.PublishVideoResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/douyin/upload/multipart/complete\x12\x80\x01\n" +
+	"\x14AbortMultipartUpload\x12%.video.v1.AbortMultipartUploadRequest\x1a\x16.google.protobuf.Empty\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/douyin/upload/multipart/abort\x12\x90\x01\n" +
+	"\x11ListUploadedParts\x12\".video.v1.ListUploadedPartsRequest\x1a#.video.v1.ListUploadedPartsResponse\"2\x82\xd3\xe4\x93\x02,\x12*/douyin/upload/multipart/{upload_id}/partsB\x1cZ\x1ago-backend/api/video/v1;v1b\x06proto3"
 
 var (
 	file_video_v1_video_proto_rawDescOnce sync.Once
@@ -1631,84 +2491,118 @@ func file_video_v1_video_proto_rawDescGZIP() []byte {
 }
 
 var file_video_v1_video_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_video_v1_video_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_video_v1_video_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_video_v1_video_proto_goTypes = []any{
-	(UploadStatus)(0),                 // 0: video.v1.UploadStatus
-	(UpdateVideoStatsType)(0),         // 1: video.v1.UpdateVideoStatsType
-	(*GetFeedRequest)(nil),            // 2: video.v1.GetFeedRequest
-	(*GetFeedResponse)(nil),           // 3: video.v1.GetFeedResponse
-	(*GetFeedData)(nil),               // 4: video.v1.GetFeedData
-	(*PublishVideoRequest)(nil),       // 5: video.v1.PublishVideoRequest
-	(*FileUploadInfo)(nil),            // 6: video.v1.FileUploadInfo
-	(*UploadVideoFileRequest)(nil),    // 7: video.v1.UploadVideoFileRequest
-	(*FileMetadata)(nil),              // 8: video.v1.FileMetadata
-	(*PublishVideoResponse)(nil),      // 9: video.v1.PublishVideoResponse
-	(*PublishVideoData)(nil),          // 10: video.v1.PublishVideoData
-	(*GetPublishListRequest)(nil),     // 11: video.v1.GetPublishListRequest
-	(*GetPublishListResponse)(nil),    // 12: video.v1.GetPublishListResponse
-	(*GetPublishListData)(nil),        // 13: video.v1.GetPublishListData
-	(*GetUploadConfigRequest)(nil),    // 14: video.v1.GetUploadConfigRequest
-	(*GetUploadConfigResponse)(nil),   // 15: video.v1.GetUploadConfigResponse
-	(*UploadConfig)(nil),              // 16: video.v1.UploadConfig
-	(*GetUploadProgressRequest)(nil),  // 17: video.v1.GetUploadProgressRequest
-	(*GetUploadProgressResponse)(nil), // 18: video.v1.GetUploadProgressResponse
-	(*UploadProgress)(nil),            // 19: video.v1.UploadProgress
-	(*GetVideoInfoRequest)(nil),       // 20: video.v1.GetVideoInfoRequest
-	(*GetVideoInfoResponse)(nil),      // 21: video.v1.GetVideoInfoResponse
-	(*GetVideosInfoRequest)(nil),      // 22: video.v1.GetVideosInfoRequest
-	(*GetVideosInfoResponse)(nil),     // 23: video.v1.GetVideosInfoResponse
-	(*UpdateVideoStatsRequest)(nil),   // 24: video.v1.UpdateVideoStatsRequest
-	nil,                               // 25: video.v1.FileMetadata.ExtraEntry
-	nil,                               // 26: video.v1.UploadConfig.ExtraConfigEntry
-	(*v1.BaseResponse)(nil),           // 27: common.v1.BaseResponse
-	(*v1.Video)(nil),                  // 28: common.v1.Video
-	(*emptypb.Empty)(nil),             // 29: google.protobuf.Empty
+	(UploadStatus)(0),                       // 0: video.v1.UploadStatus
+	(UpdateVideoStatsType)(0),               // 1: video.v1.UpdateVideoStatsType
+	(*GetFeedRequest)(nil),                  // 2: video.v1.GetFeedRequest
+	(*GetFeedResponse)(nil),                 // 3: video.v1.GetFeedResponse
+	(*GetFeedData)(nil),                     // 4: video.v1.GetFeedData
+	(*PublishVideoRequest)(nil),             // 5: video.v1.PublishVideoRequest
+	(*FileUploadInfo)(nil),                  // 6: video.v1.FileUploadInfo
+	(*UploadVideoFileRequest)(nil),          // 7: video.v1.UploadVideoFileRequest
+	(*FileMetadata)(nil),                    // 8: video.v1.FileMetadata
+	(*PublishVideoResponse)(nil),            // 9: video.v1.PublishVideoResponse
+	(*PublishVideoData)(nil),                // 10: video.v1.PublishVideoData
+	(*GetPublishListRequest)(nil),           // 11: video.v1.GetPublishListRequest
+	(*GetPublishListResponse)(nil),          // 12: video.v1.GetPublishListResponse
+	(*GetPublishListData)(nil),              // 13: video.v1.GetPublishListData
+	(*GetUploadConfigRequest)(nil),          // 14: video.v1.GetUploadConfigRequest
+	(*GetUploadConfigResponse)(nil),         // 15: video.v1.GetUploadConfigResponse
+	(*UploadConfig)(nil),                    // 16: video.v1.UploadConfig
+	(*GetUploadProgressRequest)(nil),        // 17: video.v1.GetUploadProgressRequest
+	(*GetUploadProgressResponse)(nil),       // 18: video.v1.GetUploadProgressResponse
+	(*UploadProgress)(nil),                  // 19: video.v1.UploadProgress
+	(*GetVideoInfoRequest)(nil),             // 20: video.v1.GetVideoInfoRequest
+	(*GetVideoInfoResponse)(nil),            // 21: video.v1.GetVideoInfoResponse
+	(*GetVideosInfoRequest)(nil),            // 22: video.v1.GetVideosInfoRequest
+	(*GetVideosInfoResponse)(nil),           // 23: video.v1.GetVideosInfoResponse
+	(*UpdateVideoStatsRequest)(nil),         // 24: video.v1.UpdateVideoStatsRequest
+	(*InitiateMultipartUploadRequest)(nil),  // 25: video.v1.InitiateMultipartUploadRequest
+	(*InitiateMultipartUploadResponse)(nil), // 26: video.v1.InitiateMultipartUploadResponse
+	(*MultipartUploadInfo)(nil),             // 27: video.v1.MultipartUploadInfo
+	(*UploadPartRequest)(nil),               // 28: video.v1.UploadPartRequest
+	(*UploadPartResponse)(nil),              // 29: video.v1.UploadPartResponse
+	(*PartInfo)(nil),                        // 30: video.v1.PartInfo
+	(*CompleteMultipartUploadRequest)(nil),  // 31: video.v1.CompleteMultipartUploadRequest
+	(*AbortMultipartUploadRequest)(nil),     // 32: video.v1.AbortMultipartUploadRequest
+	(*ListUploadedPartsRequest)(nil),        // 33: video.v1.ListUploadedPartsRequest
+	(*ListUploadedPartsResponse)(nil),       // 34: video.v1.ListUploadedPartsResponse
+	(*ListUploadedPartsData)(nil),           // 35: video.v1.ListUploadedPartsData
+	(*UploadProgressDetail)(nil),            // 36: video.v1.UploadProgressDetail
+	nil,                                     // 37: video.v1.FileMetadata.ExtraEntry
+	nil,                                     // 38: video.v1.UploadConfig.ExtraConfigEntry
+	nil,                                     // 39: video.v1.MultipartUploadInfo.UploadUrlsEntry
+	(*v1.BaseResponse)(nil),                 // 40: common.v1.BaseResponse
+	(*v1.Video)(nil),                        // 41: common.v1.Video
+	(*emptypb.Empty)(nil),                   // 42: google.protobuf.Empty
 }
 var file_video_v1_video_proto_depIdxs = []int32{
-	27, // 0: video.v1.GetFeedResponse.base:type_name -> common.v1.BaseResponse
+	40, // 0: video.v1.GetFeedResponse.base:type_name -> common.v1.BaseResponse
 	4,  // 1: video.v1.GetFeedResponse.data:type_name -> video.v1.GetFeedData
-	28, // 2: video.v1.GetFeedData.video_list:type_name -> common.v1.Video
+	41, // 2: video.v1.GetFeedData.video_list:type_name -> common.v1.Video
 	6,  // 3: video.v1.PublishVideoRequest.file_info:type_name -> video.v1.FileUploadInfo
 	8,  // 4: video.v1.UploadVideoFileRequest.metadata:type_name -> video.v1.FileMetadata
-	25, // 5: video.v1.FileMetadata.extra:type_name -> video.v1.FileMetadata.ExtraEntry
-	27, // 6: video.v1.PublishVideoResponse.base:type_name -> common.v1.BaseResponse
+	37, // 5: video.v1.FileMetadata.extra:type_name -> video.v1.FileMetadata.ExtraEntry
+	40, // 6: video.v1.PublishVideoResponse.base:type_name -> common.v1.BaseResponse
 	10, // 7: video.v1.PublishVideoResponse.data:type_name -> video.v1.PublishVideoData
 	0,  // 8: video.v1.PublishVideoData.status:type_name -> video.v1.UploadStatus
-	27, // 9: video.v1.GetPublishListResponse.base:type_name -> common.v1.BaseResponse
+	40, // 9: video.v1.GetPublishListResponse.base:type_name -> common.v1.BaseResponse
 	13, // 10: video.v1.GetPublishListResponse.data:type_name -> video.v1.GetPublishListData
-	28, // 11: video.v1.GetPublishListData.video_list:type_name -> common.v1.Video
-	27, // 12: video.v1.GetUploadConfigResponse.base:type_name -> common.v1.BaseResponse
+	41, // 11: video.v1.GetPublishListData.video_list:type_name -> common.v1.Video
+	40, // 12: video.v1.GetUploadConfigResponse.base:type_name -> common.v1.BaseResponse
 	16, // 13: video.v1.GetUploadConfigResponse.data:type_name -> video.v1.UploadConfig
-	26, // 14: video.v1.UploadConfig.extra_config:type_name -> video.v1.UploadConfig.ExtraConfigEntry
-	27, // 15: video.v1.GetUploadProgressResponse.base:type_name -> common.v1.BaseResponse
+	38, // 14: video.v1.UploadConfig.extra_config:type_name -> video.v1.UploadConfig.ExtraConfigEntry
+	40, // 15: video.v1.GetUploadProgressResponse.base:type_name -> common.v1.BaseResponse
 	19, // 16: video.v1.GetUploadProgressResponse.data:type_name -> video.v1.UploadProgress
 	0,  // 17: video.v1.UploadProgress.status:type_name -> video.v1.UploadStatus
-	28, // 18: video.v1.GetVideoInfoResponse.video:type_name -> common.v1.Video
-	28, // 19: video.v1.GetVideosInfoResponse.videos:type_name -> common.v1.Video
+	41, // 18: video.v1.GetVideoInfoResponse.video:type_name -> common.v1.Video
+	41, // 19: video.v1.GetVideosInfoResponse.videos:type_name -> common.v1.Video
 	1,  // 20: video.v1.UpdateVideoStatsRequest.type:type_name -> video.v1.UpdateVideoStatsType
-	2,  // 21: video.v1.VideoService.GetFeed:input_type -> video.v1.GetFeedRequest
-	5,  // 22: video.v1.VideoService.PublishVideo:input_type -> video.v1.PublishVideoRequest
-	7,  // 23: video.v1.VideoService.UploadVideoFile:input_type -> video.v1.UploadVideoFileRequest
-	11, // 24: video.v1.VideoService.GetPublishList:input_type -> video.v1.GetPublishListRequest
-	14, // 25: video.v1.VideoService.GetUploadConfig:input_type -> video.v1.GetUploadConfigRequest
-	17, // 26: video.v1.VideoService.GetUploadProgress:input_type -> video.v1.GetUploadProgressRequest
-	20, // 27: video.v1.VideoService.GetVideoInfo:input_type -> video.v1.GetVideoInfoRequest
-	22, // 28: video.v1.VideoService.GetVideosInfo:input_type -> video.v1.GetVideosInfoRequest
-	24, // 29: video.v1.VideoService.UpdateVideoStats:input_type -> video.v1.UpdateVideoStatsRequest
-	3,  // 30: video.v1.VideoService.GetFeed:output_type -> video.v1.GetFeedResponse
-	9,  // 31: video.v1.VideoService.PublishVideo:output_type -> video.v1.PublishVideoResponse
-	9,  // 32: video.v1.VideoService.UploadVideoFile:output_type -> video.v1.PublishVideoResponse
-	12, // 33: video.v1.VideoService.GetPublishList:output_type -> video.v1.GetPublishListResponse
-	15, // 34: video.v1.VideoService.GetUploadConfig:output_type -> video.v1.GetUploadConfigResponse
-	18, // 35: video.v1.VideoService.GetUploadProgress:output_type -> video.v1.GetUploadProgressResponse
-	21, // 36: video.v1.VideoService.GetVideoInfo:output_type -> video.v1.GetVideoInfoResponse
-	23, // 37: video.v1.VideoService.GetVideosInfo:output_type -> video.v1.GetVideosInfoResponse
-	29, // 38: video.v1.VideoService.UpdateVideoStats:output_type -> google.protobuf.Empty
-	30, // [30:39] is the sub-list for method output_type
-	21, // [21:30] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	40, // 21: video.v1.InitiateMultipartUploadResponse.base:type_name -> common.v1.BaseResponse
+	27, // 22: video.v1.InitiateMultipartUploadResponse.data:type_name -> video.v1.MultipartUploadInfo
+	39, // 23: video.v1.MultipartUploadInfo.upload_urls:type_name -> video.v1.MultipartUploadInfo.UploadUrlsEntry
+	40, // 24: video.v1.UploadPartResponse.base:type_name -> common.v1.BaseResponse
+	30, // 25: video.v1.UploadPartResponse.data:type_name -> video.v1.PartInfo
+	30, // 26: video.v1.CompleteMultipartUploadRequest.parts:type_name -> video.v1.PartInfo
+	40, // 27: video.v1.ListUploadedPartsResponse.base:type_name -> common.v1.BaseResponse
+	35, // 28: video.v1.ListUploadedPartsResponse.data:type_name -> video.v1.ListUploadedPartsData
+	30, // 29: video.v1.ListUploadedPartsData.parts:type_name -> video.v1.PartInfo
+	0,  // 30: video.v1.UploadProgressDetail.status:type_name -> video.v1.UploadStatus
+	30, // 31: video.v1.UploadProgressDetail.completed_parts:type_name -> video.v1.PartInfo
+	2,  // 32: video.v1.VideoService.GetFeed:input_type -> video.v1.GetFeedRequest
+	5,  // 33: video.v1.VideoService.PublishVideo:input_type -> video.v1.PublishVideoRequest
+	7,  // 34: video.v1.VideoService.UploadVideoFile:input_type -> video.v1.UploadVideoFileRequest
+	11, // 35: video.v1.VideoService.GetPublishList:input_type -> video.v1.GetPublishListRequest
+	14, // 36: video.v1.VideoService.GetUploadConfig:input_type -> video.v1.GetUploadConfigRequest
+	17, // 37: video.v1.VideoService.GetUploadProgress:input_type -> video.v1.GetUploadProgressRequest
+	20, // 38: video.v1.VideoService.GetVideoInfo:input_type -> video.v1.GetVideoInfoRequest
+	22, // 39: video.v1.VideoService.GetVideosInfo:input_type -> video.v1.GetVideosInfoRequest
+	24, // 40: video.v1.VideoService.UpdateVideoStats:input_type -> video.v1.UpdateVideoStatsRequest
+	25, // 41: video.v1.VideoService.InitiateMultipartUpload:input_type -> video.v1.InitiateMultipartUploadRequest
+	28, // 42: video.v1.VideoService.UploadPart:input_type -> video.v1.UploadPartRequest
+	31, // 43: video.v1.VideoService.CompleteMultipartUpload:input_type -> video.v1.CompleteMultipartUploadRequest
+	32, // 44: video.v1.VideoService.AbortMultipartUpload:input_type -> video.v1.AbortMultipartUploadRequest
+	33, // 45: video.v1.VideoService.ListUploadedParts:input_type -> video.v1.ListUploadedPartsRequest
+	3,  // 46: video.v1.VideoService.GetFeed:output_type -> video.v1.GetFeedResponse
+	9,  // 47: video.v1.VideoService.PublishVideo:output_type -> video.v1.PublishVideoResponse
+	9,  // 48: video.v1.VideoService.UploadVideoFile:output_type -> video.v1.PublishVideoResponse
+	12, // 49: video.v1.VideoService.GetPublishList:output_type -> video.v1.GetPublishListResponse
+	15, // 50: video.v1.VideoService.GetUploadConfig:output_type -> video.v1.GetUploadConfigResponse
+	18, // 51: video.v1.VideoService.GetUploadProgress:output_type -> video.v1.GetUploadProgressResponse
+	21, // 52: video.v1.VideoService.GetVideoInfo:output_type -> video.v1.GetVideoInfoResponse
+	23, // 53: video.v1.VideoService.GetVideosInfo:output_type -> video.v1.GetVideosInfoResponse
+	42, // 54: video.v1.VideoService.UpdateVideoStats:output_type -> google.protobuf.Empty
+	26, // 55: video.v1.VideoService.InitiateMultipartUpload:output_type -> video.v1.InitiateMultipartUploadResponse
+	29, // 56: video.v1.VideoService.UploadPart:output_type -> video.v1.UploadPartResponse
+	9,  // 57: video.v1.VideoService.CompleteMultipartUpload:output_type -> video.v1.PublishVideoResponse
+	42, // 58: video.v1.VideoService.AbortMultipartUpload:output_type -> google.protobuf.Empty
+	34, // 59: video.v1.VideoService.ListUploadedParts:output_type -> video.v1.ListUploadedPartsResponse
+	46, // [46:60] is the sub-list for method output_type
+	32, // [32:46] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_video_v1_video_proto_init() }
@@ -1726,7 +2620,7 @@ func file_video_v1_video_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_video_v1_video_proto_rawDesc), len(file_video_v1_video_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   25,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

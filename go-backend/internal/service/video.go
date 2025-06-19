@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"mime/multipart"
@@ -12,6 +13,7 @@ import (
 	"go-backend/internal/middleware"
 	"go-backend/pkg/media"
 	"go-backend/pkg/security"
+	"go-backend/pkg/storage"
 	"go-backend/pkg/utils"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -143,8 +145,7 @@ func (s *VideoService) PublishVideo(ctx context.Context, req *v1.PublishVideoReq
 				},
 			}, nil
 		}
-		// 对于FileInfo模式，这里应该从临时存储或缓存中获取文件数据
-		// 简化实现：返回错误，提示使用UploadVideoFile接口
+		// 对于FileInfo模式，提示使用UploadVideoFile接口
 		return &v1.PublishVideoResponse{
 			Base: &commonv1.BaseResponse{
 				StatusCode: int32(commonv1.ErrorCode_PARAM_ERROR),
@@ -387,6 +388,209 @@ func (s *VideoService) GetUploadProgress(ctx context.Context, req *v1.GetUploadP
 	}, nil
 }
 
+// InitiateMultipartUpload 初始化分片上传
+func (s *VideoService) InitiateMultipartUpload(ctx context.Context, req *v1.InitiateMultipartUploadRequest) (*v1.InitiateMultipartUploadResponse, error) {
+	s.log.WithContext(ctx).Info("initiate multipart upload request")
+
+	// 验证Token
+	if _, ok := middleware.GetUserIDFromToken(ctx, req.Token); !ok {
+		return &v1.InitiateMultipartUploadResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(commonv1.ErrorCode_TOKEN_INVALID),
+				StatusMsg:  "invalid token",
+			},
+		}, nil
+	}
+
+	// 初始化分片上传
+	uploadInfo, err := s.videoUc.InitiateMultipartUpload(ctx, req.Filename, req.FileSize, req.ContentType, req.Title)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("initiate multipart upload failed: %v", err)
+		return &v1.InitiateMultipartUploadResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(utils.GetErrorCode(err)),
+				StatusMsg:  "initiate upload failed",
+			},
+		}, nil
+	}
+
+	// 计算总分片数
+	totalParts := int32((req.FileSize + uploadInfo.ChunkSize - 1) / uploadInfo.ChunkSize)
+
+	return &v1.InitiateMultipartUploadResponse{
+		Base: &commonv1.BaseResponse{
+			StatusCode: 0,
+			StatusMsg:  "success",
+		},
+		Data: &v1.MultipartUploadInfo{
+			UploadId:   uploadInfo.UploadID,
+			ChunkSize:  uploadInfo.ChunkSize,
+			TotalParts: totalParts,
+		},
+	}, nil
+}
+
+// UploadPart 上传分片
+func (s *VideoService) UploadPart(ctx context.Context, req *v1.UploadPartRequest) (*v1.UploadPartResponse, error) {
+	s.log.WithContext(ctx).Info("upload part request")
+
+	// 验证Token
+	_, ok := middleware.GetUserIDFromToken(ctx, req.Token)
+	if !ok {
+		return &v1.UploadPartResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(commonv1.ErrorCode_TOKEN_INVALID),
+				StatusMsg:  "invalid token",
+			},
+		}, nil
+	}
+
+	// 上传分片
+	reader := bytes.NewReader(req.Data)
+	partInfo, err := s.videoUc.UploadPart(ctx, req.UploadId, int(req.PartNumber), reader, req.Size)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("upload part failed: %v", err)
+		return &v1.UploadPartResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(utils.GetErrorCode(err)),
+				StatusMsg:  "upload part failed",
+			},
+		}, nil
+	}
+
+	return &v1.UploadPartResponse{
+		Base: &commonv1.BaseResponse{
+			StatusCode: 0,
+			StatusMsg:  "success",
+		},
+		Data: &v1.PartInfo{
+			PartNumber: int32(partInfo.PartNumber),
+			Etag:       partInfo.ETag,
+			Size:       partInfo.Size,
+		},
+	}, nil
+}
+
+// CompleteMultipartUpload 完成分片上传
+func (s *VideoService) CompleteMultipartUpload(ctx context.Context, req *v1.CompleteMultipartUploadRequest) (*v1.PublishVideoResponse, error) {
+	s.log.WithContext(ctx).Info("complete multipart upload request")
+
+	// 验证Token
+	userID, ok := middleware.GetUserIDFromToken(ctx, req.Token)
+	if !ok {
+		return &v1.PublishVideoResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(commonv1.ErrorCode_TOKEN_INVALID),
+				StatusMsg:  "invalid token",
+			},
+		}, nil
+	}
+
+	// 转换分片信息
+	parts := make([]storage.PartInfo, len(req.Parts))
+	for i, part := range req.Parts {
+		parts[i] = storage.PartInfo{
+			PartNumber: int(part.PartNumber),
+			ETag:       part.Etag,
+			Size:       part.Size,
+		}
+	}
+
+	// 完成上传
+	video, err := s.videoUc.CompleteMultipartUpload(ctx, req.UploadId, parts, req.Title, userID)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("complete multipart upload failed: %v", err)
+		return &v1.PublishVideoResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(utils.GetErrorCode(err)),
+				StatusMsg:  "complete upload failed",
+			},
+		}, nil
+	}
+
+	return &v1.PublishVideoResponse{
+		Base: &commonv1.BaseResponse{
+			StatusCode: 0,
+			StatusMsg:  "success",
+		},
+		Data: &v1.PublishVideoData{
+			VideoId: video.ID,
+			Status:  v1.UploadStatus_UPLOAD_STATUS_PROCESSING,
+		},
+	}, nil
+}
+
+// AbortMultipartUpload 取消分片上传
+func (s *VideoService) AbortMultipartUpload(ctx context.Context, req *v1.AbortMultipartUploadRequest) (*emptypb.Empty, error) {
+	s.log.WithContext(ctx).Info("abort multipart upload request")
+
+	// 验证Token
+	_, ok := middleware.GetUserIDFromToken(ctx, req.Token)
+	if !ok {
+		return nil, utils.ErrTokenInvalid
+	}
+
+	// 取消上传
+	if err := s.videoUc.AbortMultipartUpload(ctx, req.UploadId); err != nil {
+		s.log.WithContext(ctx).Errorf("abort multipart upload failed: %v", err)
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+// ListUploadedParts 列出已上传的分片
+func (s *VideoService) ListUploadedParts(ctx context.Context, req *v1.ListUploadedPartsRequest) (*v1.ListUploadedPartsResponse, error) {
+	s.log.WithContext(ctx).Info("list uploaded parts request")
+
+	// 验证Token
+	_, ok := middleware.GetUserIDFromToken(ctx, req.Token)
+	if !ok {
+		return &v1.ListUploadedPartsResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(commonv1.ErrorCode_TOKEN_INVALID),
+				StatusMsg:  "invalid token",
+			},
+		}, nil
+	}
+
+	// 列出已上传分片
+	parts, err := s.videoUc.ListUploadedParts(ctx, req.UploadId)
+	if err != nil {
+		s.log.WithContext(ctx).Errorf("list uploaded parts failed: %v", err)
+		return &v1.ListUploadedPartsResponse{
+			Base: &commonv1.BaseResponse{
+				StatusCode: int32(utils.GetErrorCode(err)),
+				StatusMsg:  "list parts failed",
+			},
+		}, nil
+	}
+
+	// 转换分片信息
+	partList := make([]*v1.PartInfo, len(parts))
+	var uploadedSize int64
+	for i, part := range parts {
+		partList[i] = &v1.PartInfo{
+			PartNumber: int32(part.PartNumber),
+			Etag:       part.ETag,
+			Size:       part.Size,
+		}
+		uploadedSize += part.Size
+	}
+
+	return &v1.ListUploadedPartsResponse{
+		Base: &commonv1.BaseResponse{
+			StatusCode: 0,
+			StatusMsg:  "success",
+		},
+		Data: &v1.ListUploadedPartsData{
+			Parts:        partList,
+			TotalParts:   int32(len(parts)),
+			UploadedSize: uploadedSize,
+		},
+	}, nil
+}
+
 // GetVideoInfo gRPC内部调用 - 获取视频信息
 func (s *VideoService) GetVideoInfo(ctx context.Context, req *v1.GetVideoInfoRequest) (*v1.GetVideoInfoResponse, error) {
 	video, err := s.videoUc.GetVideo(ctx, req.VideoId)
@@ -436,6 +640,8 @@ func (s *VideoService) UpdateVideoStats(ctx context.Context, req *v1.UpdateVideo
 		statsType = "comment"
 	case v1.UpdateVideoStatsType_UPDATE_VIDEO_STATS_PLAY_COUNT:
 		statsType = "play"
+	case v1.UpdateVideoStatsType_UPDATE_VIDEO_STATS_SHARE_COUNT:
+		statsType = "share"
 	default:
 		return nil, utils.ErrInvalidParam
 	}
@@ -447,8 +653,6 @@ func (s *VideoService) UpdateVideoStats(ctx context.Context, req *v1.UpdateVideo
 
 	return &emptypb.Empty{}, nil
 }
-
-// 以下是原video_handler.go中的方法
 
 // handleVideoUpload 处理视频上传
 func (s *VideoService) handleVideoUpload(ctx context.Context, userID int64, title string, fileHeader *multipart.FileHeader) (*domain.Video, error) {
@@ -462,7 +666,7 @@ func (s *VideoService) handleVideoUpload(ctx context.Context, userID int64, titl
 
 	// 验证文件格式
 	if err := s.processor.ValidateFormat(fileHeader.Filename, fileHeader.Size); err != nil {
-		return nil, utils.ErrVideoFormatErr
+		return nil, err
 	}
 
 	// 打开文件
@@ -508,8 +712,7 @@ func (s *VideoService) handleVideoUpload(ctx context.Context, userID int64, titl
 func (s *VideoService) validateVideoContent(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) error {
 	// 验证视频文件格式
 	if err := s.processor.ValidateVideoFile(ctx, file); err != nil {
-		s.log.WithContext(ctx).Warnf("video content validation failed: %v", err)
-		return utils.ErrVideoFormatErr
+		return err
 	}
 
 	// 检查视频是否有效

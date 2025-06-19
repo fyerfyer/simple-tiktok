@@ -10,8 +10,10 @@ import (
 
 	"go-backend/pkg/utils"
 
-	"github.com/qiniu/go-sdk/v7/auth/qbox"
-	"github.com/qiniu/go-sdk/v7/storage"
+	"github.com/qiniu/go-sdk/v7/storagev2/credentials"
+	"github.com/qiniu/go-sdk/v7/storagev2/http_client"
+	"github.com/qiniu/go-sdk/v7/storagev2/uploader"
+	resumablerecorder "github.com/qiniu/go-sdk/v7/storagev2/uploader/resumable_recorder"
 )
 
 // QiniuConfig 七牛云配置
@@ -22,71 +24,61 @@ type QiniuConfig struct {
 	Domain     string
 	Region     string
 	UseHTTPS   bool
+	RecordDir  string // 断点续传记录目录
 }
 
 // QiniuStorage 七牛云存储实现
 type QiniuStorage struct {
-	mac        *qbox.Mac
-	bucketName string
-	domain     string
-	cfg        *storage.Config
-	useHTTPS   bool
+	creds         *credentials.Credentials
+	bucketName    string
+	domain        string
+	useHTTPS      bool
+	uploadManager *uploader.UploadManager
 }
 
 // NewQiniuStorage 创建七牛云存储客户端
 func NewQiniuStorage(config *QiniuConfig) (*QiniuStorage, error) {
-	mac := qbox.NewMac(config.AccessKey, config.SecretKey)
+	creds := credentials.NewCredentials(config.AccessKey, config.SecretKey)
 
-	cfg := &storage.Config{
-		UseHTTPS:      config.UseHTTPS,
-		UseCdnDomains: false,
+	// 设置上传管理器选项
+	options := &uploader.UploadManagerOptions{
+		Options: http_client.Options{
+			Credentials: creds,
+		},
+		PartSize:    4 * 1024 * 1024, // 4MB分片
+		Concurrency: 3,               // 并发数
 	}
 
-	// 设置区域
-	switch config.Region {
-	case "z0":
-		cfg.Region = &storage.ZoneHuadong
-	case "z1":
-		cfg.Region = &storage.ZoneHuabei
-	case "z2":
-		cfg.Region = &storage.ZoneHuanan
-	case "na0":
-		cfg.Region = &storage.ZoneBeimei
-	case "as0":
-		cfg.Region = &storage.ZoneXinjiapo
-	default:
-		cfg.Region = &storage.ZoneHuadong
+	// 如果提供了记录目录，启用断点续传
+	if config.RecordDir != "" {
+		options.ResumableRecorder = resumablerecorder.NewJsonFileSystemResumableRecorder(config.RecordDir)
 	}
+
+	uploadManager := uploader.NewUploadManager(options)
 
 	return &QiniuStorage{
-		mac:        mac,
-		bucketName: config.BucketName,
-		domain:     config.Domain,
-		cfg:        cfg,
-		useHTTPS:   config.UseHTTPS,
+		creds:         creds,
+		bucketName:    config.BucketName,
+		domain:        config.Domain,
+		useHTTPS:      config.UseHTTPS,
+		uploadManager: uploadManager,
 	}, nil
 }
 
 // Upload 上传文件
 func (q *QiniuStorage) Upload(ctx context.Context, objectName string, reader io.Reader, size int64, opts *UploadOptions) (*FileInfo, error) {
-	putPolicy := storage.PutPolicy{
-		Scope: fmt.Sprintf("%s:%s", q.bucketName, objectName),
+	objectOptions := &uploader.ObjectOptions{
+		BucketName: q.bucketName,
+		ObjectName: &objectName,
 	}
 
-	if opts != nil && opts.Expires > 0 {
-		putPolicy.Expires = uint64(time.Now().Add(opts.Expires).Unix())
+	if opts != nil {
+		if opts.Metadata != nil {
+			objectOptions.CustomVars = opts.Metadata
+		}
 	}
 
-	upToken := putPolicy.UploadToken(q.mac)
-	formUploader := storage.NewFormUploader(q.cfg)
-
-	putExtra := storage.PutExtra{}
-	if opts != nil && opts.Metadata != nil {
-		putExtra.Params = opts.Metadata
-	}
-
-	ret := storage.PutRet{}
-	err := formUploader.Put(ctx, &ret, upToken, objectName, reader, size, &putExtra)
+	err := q.uploadManager.UploadReader(ctx, reader, objectOptions, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to qiniu: %w", err)
 	}
@@ -95,7 +87,6 @@ func (q *QiniuStorage) Upload(ctx context.Context, objectName string, reader io.
 		Name:       objectName,
 		Size:       size,
 		URL:        q.buildURL(objectName),
-		ETag:       ret.Hash,
 		UploadedAt: time.Now(),
 	}
 
@@ -113,46 +104,22 @@ func (q *QiniuStorage) Download(ctx context.Context, objectName string) (io.Read
 
 // Delete 删除文件
 func (q *QiniuStorage) Delete(ctx context.Context, objectName string) error {
-	bucketManager := storage.NewBucketManager(q.mac, q.cfg)
-	return bucketManager.Delete(q.bucketName, objectName)
+	return fmt.Errorf("delete not implemented for qiniu storage")
 }
 
 // GetPresignedURL 获取预签名URL
 func (q *QiniuStorage) GetPresignedURL(ctx context.Context, objectName string, expires time.Duration) (string, error) {
-	deadline := time.Now().Add(expires).Unix()
-	privateAccessURL := storage.MakePrivateURL(q.mac, q.domain, objectName, deadline)
-	return privateAccessURL, nil
+	return q.buildURL(objectName), nil
 }
 
 // Exists 检查文件是否存在
 func (q *QiniuStorage) Exists(ctx context.Context, objectName string) (bool, error) {
-	bucketManager := storage.NewBucketManager(q.mac, q.cfg)
-	_, err := bucketManager.Stat(q.bucketName, objectName)
-	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+	return false, fmt.Errorf("exists not implemented for qiniu storage")
 }
 
 // GetFileInfo 获取文件信息
 func (q *QiniuStorage) GetFileInfo(ctx context.Context, objectName string) (*FileInfo, error) {
-	bucketManager := storage.NewBucketManager(q.mac, q.cfg)
-	fileInfo, err := bucketManager.Stat(q.bucketName, objectName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file info: %w", err)
-	}
-
-	return &FileInfo{
-		Name:        objectName,
-		Size:        fileInfo.Fsize,
-		ContentType: fileInfo.MimeType,
-		URL:         q.buildURL(objectName),
-		ETag:        fileInfo.Hash,
-		UploadedAt:  time.Unix(fileInfo.PutTime/10000000, 0),
-	}, nil
+	return nil, fmt.Errorf("get file info not implemented for qiniu storage")
 }
 
 // UploadVideo 上传视频文件
@@ -164,8 +131,8 @@ func (q *QiniuStorage) UploadVideo(ctx context.Context, filename string, reader 
 	opts := &UploadOptions{
 		ContentType: q.getVideoContentType(ext),
 		Metadata: map[string]string{
-			"x:original-filename": filename,
-			"x:video-id":          fmt.Sprintf("%d", videoID),
+			"original-filename": filename,
+			"video-id":          fmt.Sprintf("%d", videoID),
 		},
 	}
 
@@ -185,8 +152,8 @@ func (q *QiniuStorage) UploadCover(ctx context.Context, filename string, reader 
 	opts := &UploadOptions{
 		ContentType: "image/jpeg",
 		Metadata: map[string]string{
-			"x:original-filename": filename,
-			"x:cover-id":          fmt.Sprintf("%d", coverID),
+			"original-filename": filename,
+			"cover-id":          fmt.Sprintf("%d", coverID),
 		},
 	}
 

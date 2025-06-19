@@ -215,6 +215,102 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/video.v1.GetUploadConfigResponse'
+    /douyin/upload/multipart/abort:
+        post:
+            tags:
+                - VideoService
+            description: 取消分片上传
+            operationId: VideoService_AbortMultipartUpload
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.v1.AbortMultipartUploadRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+    /douyin/upload/multipart/complete:
+        post:
+            tags:
+                - VideoService
+            description: 完成分片上传
+            operationId: VideoService_CompleteMultipartUpload
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.v1.CompleteMultipartUploadRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.PublishVideoResponse'
+    /douyin/upload/multipart/initiate:
+        post:
+            tags:
+                - VideoService
+            description: 初始化分片上传
+            operationId: VideoService_InitiateMultipartUpload
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.v1.InitiateMultipartUploadRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.InitiateMultipartUploadResponse'
+    /douyin/upload/multipart/part:
+        post:
+            tags:
+                - VideoService
+            description: 上传分片
+            operationId: VideoService_UploadPart
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.v1.UploadPartRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.UploadPartResponse'
+    /douyin/upload/multipart/{uploadId}/parts:
+        get:
+            tags:
+                - VideoService
+            description: 列出已上传的分片
+            operationId: VideoService_ListUploadedParts
+            parameters:
+                - name: uploadId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.ListUploadedPartsResponse'
     /douyin/upload/progress/{uploadId}:
         get:
             tags:
@@ -508,6 +604,28 @@ components:
                 base:
                     $ref: '#/components/schemas/common.v1.BaseResponse'
             description: 关注操作响应
+        video.v1.AbortMultipartUploadRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                uploadId:
+                    type: string
+            description: 取消分片上传请求
+        video.v1.CompleteMultipartUploadRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                uploadId:
+                    type: string
+                parts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/video.v1.PartInfo'
+                title:
+                    type: string
+            description: 完成分片上传请求
         video.v1.FileMetadata:
             type: object
             properties:
@@ -584,6 +702,75 @@ components:
                 data:
                     $ref: '#/components/schemas/video.v1.UploadProgress'
             description: 获取上传进度响应
+        video.v1.InitiateMultipartUploadRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                filename:
+                    type: string
+                fileSize:
+                    type: string
+                contentType:
+                    type: string
+                title:
+                    type: string
+            description: 初始化分片上传请求
+        video.v1.InitiateMultipartUploadResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.MultipartUploadInfo'
+            description: 初始化分片上传响应
+        video.v1.ListUploadedPartsData:
+            type: object
+            properties:
+                parts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/video.v1.PartInfo'
+                totalParts:
+                    type: integer
+                    format: int32
+                uploadedSize:
+                    type: string
+            description: 已上传分片数据
+        video.v1.ListUploadedPartsResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.ListUploadedPartsData'
+            description: 列出已上传分片响应
+        video.v1.MultipartUploadInfo:
+            type: object
+            properties:
+                uploadId:
+                    type: string
+                chunkSize:
+                    type: string
+                totalParts:
+                    type: integer
+                    format: int32
+                uploadUrls:
+                    type: object
+                    additionalProperties:
+                        type: string
+            description: 分片上传信息
+        video.v1.PartInfo:
+            type: object
+            properties:
+                partNumber:
+                    type: integer
+                    format: int32
+                etag:
+                    type: string
+                size:
+                    type: string
+            description: 分片信息
         video.v1.PublishVideoData:
             type: object
             properties:
@@ -636,6 +823,30 @@ components:
                     additionalProperties:
                         type: string
             description: 上传配置
+        video.v1.UploadPartRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                uploadId:
+                    type: string
+                partNumber:
+                    type: integer
+                    format: int32
+                data:
+                    type: string
+                    format: bytes
+                size:
+                    type: string
+            description: 上传分片请求
+        video.v1.UploadPartResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.PartInfo'
+            description: 上传分片响应
         video.v1.UploadProgress:
             type: object
             properties:

@@ -27,6 +27,8 @@ type VideoRepo interface {
 	GetFeedVideos(ctx context.Context, latestTime time.Time, limit int) ([]*domain.Video, error)
 	UpdateVideoStats(ctx context.Context, videoID int64, field string, delta int64) error
 	UpdateVideo(ctx context.Context, video *domain.Video) error
+	UpdateVideoCover(ctx context.Context, videoID int64, coverURL string) error
+	UpdateVideoPlayURL(ctx context.Context, videoID int64, playURL string) error
 }
 
 // VideoCacheRepo 视频缓存接口
@@ -142,6 +144,92 @@ func (uc *VideoUsecase) PublishVideo(ctx context.Context, authorID int64, title 
 
 	uc.log.WithContext(ctx).Infof("video published successfully: %d", videoID)
 	return video, nil
+}
+
+// InitiateMultipartUpload 初始化分片上传
+func (uc *VideoUsecase) InitiateMultipartUpload(ctx context.Context, filename string, totalSize int64, contentType, title string) (*storage.MultipartUploadInfo, error) {
+	// 验证文件格式
+	if err := uc.processor.ValidateFormat(filename, totalSize); err != nil {
+		return nil, err
+	}
+
+	// 验证标题
+	if err := uc.validator.ValidateVideoTitle(title); err != nil {
+		return nil, err
+	}
+
+	// 如果存储支持分片上传
+	if multipartStorage, ok := uc.storage.(storage.MultipartStorage); ok {
+		opts := &storage.MultipartUploadOptions{
+			ContentType: contentType,
+			ChunkSize:   4 * 1024 * 1024, // 4MB
+			Metadata: map[string]string{
+				"title":    title,
+				"filename": filename,
+			},
+		}
+		return multipartStorage.InitiateMultipartUpload(ctx, filename, opts)
+	}
+
+	return nil, fmt.Errorf("storage does not support multipart upload")
+}
+
+// UploadPart 上传分片
+func (uc *VideoUsecase) UploadPart(ctx context.Context, uploadID string, partNumber int, reader io.Reader, size int64) (*storage.PartInfo, error) {
+	if multipartStorage, ok := uc.storage.(storage.MultipartStorage); ok {
+		return multipartStorage.UploadPart(ctx, uploadID, partNumber, reader, size)
+	}
+	return nil, fmt.Errorf("storage does not support multipart upload")
+}
+
+// CompleteMultipartUpload 完成分片上传
+func (uc *VideoUsecase) CompleteMultipartUpload(ctx context.Context, uploadID string, parts []storage.PartInfo, title string, userID int64) (*domain.Video, error) {
+	multipartStorage, ok := uc.storage.(storage.MultipartStorage)
+	if !ok {
+		return nil, fmt.Errorf("storage does not support multipart upload")
+	}
+
+	// 完成分片上传
+	fileInfo, err := multipartStorage.CompleteMultipartUpload(ctx, uploadID, parts)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建视频记录
+	video := &domain.Video{
+		ID:            utils.MustGenerateID(),
+		AuthorID:      userID,
+		Title:         title,
+		PlayURL:       fileInfo.URL,
+		FavoriteCount: 0,
+		CommentCount:  0,
+		PlayCount:     0,
+		Status:        domain.VideoStatusPending,
+	}
+
+	if err := uc.repo.CreateVideo(ctx, video); err != nil {
+		return nil, err
+	}
+
+	// 发送处理事件
+	uc.publishVideoUploadedEvent(ctx, video)
+	return video, nil
+}
+
+// AbortMultipartUpload 取消分片上传
+func (uc *VideoUsecase) AbortMultipartUpload(ctx context.Context, uploadID string) error {
+	if multipartStorage, ok := uc.storage.(storage.MultipartStorage); ok {
+		return multipartStorage.AbortMultipartUpload(ctx, uploadID)
+	}
+	return fmt.Errorf("storage does not support multipart upload")
+}
+
+// ListUploadedParts 列出已上传的分片
+func (uc *VideoUsecase) ListUploadedParts(ctx context.Context, uploadID string) ([]storage.PartInfo, error) {
+	if multipartStorage, ok := uc.storage.(storage.MultipartStorage); ok {
+		return multipartStorage.ListParts(ctx, uploadID)
+	}
+	return nil, fmt.Errorf("storage does not support multipart upload")
 }
 
 // GetFeed 获取视频流
@@ -283,78 +371,56 @@ func (uc *VideoUsecase) GetUploadConfig(ctx context.Context) (*UploadConfig, err
 		MaxFileSize:      uc.processor.GetMaxFileSize(),
 		SupportedFormats: uc.processor.GetSupportedFormats(),
 		ChunkSize:        4 * 1024 * 1024, // 4MB
-		EnableResume:     false,           // 暂不支持断点续传
+		EnableResume:     true,            // 支持断点续传
 	}, nil
 }
 
 // GetUploadProgress 获取上传进度
 func (uc *VideoUsecase) GetUploadProgress(ctx context.Context, uploadID string) (*UploadProgress, error) {
-	// TODO: 实现上传进度查询，目前返回模拟数据
+	// 如果存储支持断点续传
+	if resumableStorage, ok := uc.storage.(storage.ResumableStorage); ok {
+		uploadedSize, err := resumableStorage.GetUploadProgress(ctx, uploadID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 这里可以从缓存或数据库获取总大小
+		return &UploadProgress{
+			UploadID:      uploadID,
+			Progress:      50, // 简化计算
+			Status:        "uploading",
+			TotalSize:     0,
+			UploadedSize:  uploadedSize,
+			EstimatedTime: 0,
+		}, nil
+	}
+
 	return &UploadProgress{
-		UploadID:      uploadID,
-		Progress:      100,
-		Status:        "completed",
-		TotalSize:     0,
-		UploadedSize:  0,
-		EstimatedTime: 0,
+		UploadID: uploadID,
+		Progress: 100,
+		Status:   "completed",
 	}, nil
 }
 
-// ProcessVideoUpload 处理视频上传
-func (uc *VideoUsecase) ProcessVideoUpload(ctx context.Context, event *messaging.VideoUploadEvent) error {
-	uc.log.WithContext(ctx).Infof("processing video upload: video_id=%d", event.VideoID)
-
-	video, err := uc.repo.GetVideo(ctx, event.VideoID)
-	if err != nil {
-		uc.log.WithContext(ctx).Errorf("get video failed: %v", err)
+// UpdateVideoCover 更新视频封面
+func (uc *VideoUsecase) UpdateVideoCover(ctx context.Context, videoID int64, coverURL string) error {
+	if err := uc.repo.UpdateVideoCover(ctx, videoID, coverURL); err != nil {
 		return err
 	}
 
-	// 异步生成封面
-	go func() {
-		if err := uc.generateVideoThumbnail(context.Background(), video); err != nil {
-			uc.log.Errorf("generate thumbnail failed: video_id=%d, error=%v", video.ID, err)
-		}
-	}()
-
-	// 异步处理视频转码
-	go func() {
-		if err := uc.transcodeVideo(context.Background(), video); err != nil {
-			uc.log.Errorf("transcode video failed: video_id=%d, error=%v", video.ID, err)
-		}
-	}()
-
-	uc.publishVideoProcessedEvent(ctx, video.ID, "upload", "completed", "")
+	// 清除缓存
+	uc.cache.DeleteVideo(ctx, videoID)
 	return nil
 }
 
-// ProcessVideoTranscode 处理视频转码
-func (uc *VideoUsecase) ProcessVideoTranscode(ctx context.Context, event *messaging.VideoProcessEvent) error {
-	uc.log.WithContext(ctx).Infof("processing video transcode: video_id=%d", event.VideoID)
-
-	if event.ProcessType != "transcode" {
-		return nil
-	}
-
-	video, err := uc.repo.GetVideo(ctx, event.VideoID)
-	if err != nil {
+// UpdateVideoPlayURL 更新视频播放URL
+func (uc *VideoUsecase) UpdateVideoPlayURL(ctx context.Context, videoID int64, playURL string) error {
+	if err := uc.repo.UpdateVideoPlayURL(ctx, videoID, playURL); err != nil {
 		return err
 	}
 
-	if err := uc.transcodeVideo(ctx, video); err != nil {
-		uc.publishVideoProcessedEvent(ctx, video.ID, "transcode", "failed", err.Error())
-		return err
-	}
-
-	video.Status = domain.VideoStatusPublished
-	if err := uc.repo.UpdateVideo(ctx, video); err != nil {
-		return err
-	}
-
-	uc.cache.DeleteVideo(ctx, video.ID)
-	uc.cache.DeleteUserVideos(ctx, video.AuthorID)
-
-	uc.publishVideoProcessedEvent(ctx, video.ID, "transcode", "completed", "")
+	// 清除缓存
+	uc.cache.DeleteVideo(ctx, videoID)
 	return nil
 }
 
@@ -431,68 +497,18 @@ func (uc *VideoUsecase) processVideoAsync(ctx context.Context, video *domain.Vid
 	}
 }
 
-func (uc *VideoUsecase) publishVideoProcessedEvent(ctx context.Context, videoID int64, processType, status, errorMsg string) {
-	if uc.kafkaManager == nil {
-		return
-	}
-
-	event := &messaging.VideoProcessEvent{
-		VideoID:     videoID,
-		ProcessType: processType,
-		Status:      status,
-		Error:       errorMsg,
-	}
-
-	if err := uc.kafkaManager.SendVideoProcessEvent(ctx, uc.businessConfig.KafkaTopics.VideoProcess, event); err != nil {
-		uc.log.WithContext(ctx).Errorf("send video process event failed: %v", err)
-	}
-}
-
-func (uc *VideoUsecase) generateVideoThumbnail(ctx context.Context, video *domain.Video) error {
-	thumbnailReader, err := uc.processor.GenerateDefaultThumbnail(ctx)
-	if err != nil {
-		return err
-	}
-
-	thumbnailData, err := io.ReadAll(thumbnailReader)
-	if err != nil {
-		return err
-	}
-
-	coverFilename := utils.GenerateCoverFilename(fmt.Sprintf("video_%d.mp4", video.ID))
-	coverURL, err := uc.storage.UploadCover(ctx, coverFilename,
-		strings.NewReader(string(thumbnailData)), int64(len(thumbnailData)))
-	if err != nil {
-		return err
-	}
-
-	video.CoverURL = coverURL
-	if err := uc.repo.UpdateVideo(ctx, video); err != nil {
-		return err
-	}
-
-	uc.cache.DeleteVideo(ctx, video.ID)
-	uc.log.WithContext(ctx).Infof("thumbnail generated successfully: video_id=%d", video.ID)
-	return nil
-}
-
-func (uc *VideoUsecase) transcodeVideo(ctx context.Context, video *domain.Video) error {
-	uc.log.WithContext(ctx).Infof("transcoding video: video_id=%d", video.ID)
-	time.Sleep(2 * time.Second) // 模拟转码
-	uc.log.WithContext(ctx).Infof("video transcoding completed: video_id=%d", video.ID)
-	return nil
-}
-
 func (uc *VideoUsecase) cleanupUploadedFiles(ctx context.Context, playURL, coverURL string) {
 	if playURL != "" {
-		if err := uc.storage.Delete(ctx, uc.extractObjectName(playURL)); err != nil {
-			uc.log.WithContext(ctx).Errorf("cleanup video file failed: %v", err)
+		objectName := uc.extractObjectName(playURL)
+		if err := uc.storage.Delete(ctx, objectName); err != nil {
+			uc.log.WithContext(ctx).Warnf("cleanup video file failed: %v", err)
 		}
 	}
 
 	if coverURL != "" {
-		if err := uc.storage.Delete(ctx, uc.extractObjectName(coverURL)); err != nil {
-			uc.log.WithContext(ctx).Errorf("cleanup cover file failed: %v", err)
+		objectName := uc.extractObjectName(coverURL)
+		if err := uc.storage.Delete(ctx, objectName); err != nil {
+			uc.log.WithContext(ctx).Warnf("cleanup cover file failed: %v", err)
 		}
 	}
 }

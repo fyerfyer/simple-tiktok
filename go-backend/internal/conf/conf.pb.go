@@ -726,6 +726,7 @@ type Data_Qiniu struct {
 	Domain        string                 `protobuf:"bytes,4,opt,name=domain,proto3" json:"domain,omitempty"`
 	Region        string                 `protobuf:"bytes,5,opt,name=region,proto3" json:"region,omitempty"`
 	UseHttps      bool                   `protobuf:"varint,6,opt,name=use_https,json=useHttps,proto3" json:"use_https,omitempty"`
+	RecordDir     string                 `protobuf:"bytes,7,opt,name=record_dir,json=recordDir,proto3" json:"record_dir,omitempty"` // 断点续传记录目录
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -800,6 +801,13 @@ func (x *Data_Qiniu) GetUseHttps() bool {
 		return x.UseHttps
 	}
 	return false
+}
+
+func (x *Data_Qiniu) GetRecordDir() string {
+	if x != nil {
+		return x.RecordDir
+	}
+	return ""
 }
 
 type Data_Kafka struct {
@@ -1091,6 +1099,7 @@ type Business_Video struct {
 	CoverQuality     int32                  `protobuf:"varint,5,opt,name=cover_quality,json=coverQuality,proto3" json:"cover_quality,omitempty"`
 	CoverWidth       int32                  `protobuf:"varint,6,opt,name=cover_width,json=coverWidth,proto3" json:"cover_width,omitempty"`
 	CoverHeight      int32                  `protobuf:"varint,7,opt,name=cover_height,json=coverHeight,proto3" json:"cover_height,omitempty"`
+	TempDir          string                 `protobuf:"bytes,8,opt,name=temp_dir,json=tempDir,proto3" json:"temp_dir,omitempty"` // 视频处理临时目录
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1174,14 +1183,23 @@ func (x *Business_Video) GetCoverHeight() int32 {
 	return 0
 }
 
+func (x *Business_Video) GetTempDir() string {
+	if x != nil {
+		return x.TempDir
+	}
+	return ""
+}
+
 type Business_Storage struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	UploadTimeout      *durationpb.Duration   `protobuf:"bytes,1,opt,name=upload_timeout,json=uploadTimeout,proto3" json:"upload_timeout,omitempty"`
-	DownloadTimeout    *durationpb.Duration   `protobuf:"bytes,2,opt,name=download_timeout,json=downloadTimeout,proto3" json:"download_timeout,omitempty"`
-	PresignedUrlExpire *durationpb.Duration   `protobuf:"bytes,3,opt,name=presigned_url_expire,json=presignedUrlExpire,proto3" json:"presigned_url_expire,omitempty"`
-	DefaultProvider    string                 `protobuf:"bytes,4,opt,name=default_provider,json=defaultProvider,proto3" json:"default_provider,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	UploadTimeout        *durationpb.Duration   `protobuf:"bytes,1,opt,name=upload_timeout,json=uploadTimeout,proto3" json:"upload_timeout,omitempty"`
+	DownloadTimeout      *durationpb.Duration   `protobuf:"bytes,2,opt,name=download_timeout,json=downloadTimeout,proto3" json:"download_timeout,omitempty"`
+	PresignedUrlExpire   *durationpb.Duration   `protobuf:"bytes,3,opt,name=presigned_url_expire,json=presignedUrlExpire,proto3" json:"presigned_url_expire,omitempty"`
+	DefaultProvider      string                 `protobuf:"bytes,4,opt,name=default_provider,json=defaultProvider,proto3" json:"default_provider,omitempty"`
+	MultipartChunkSize   int64                  `protobuf:"varint,5,opt,name=multipart_chunk_size,json=multipartChunkSize,proto3" json:"multipart_chunk_size,omitempty"`       // 分片大小
+	MaxConcurrentUploads int32                  `protobuf:"varint,6,opt,name=max_concurrent_uploads,json=maxConcurrentUploads,proto3" json:"max_concurrent_uploads,omitempty"` // 最大并发上传数
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *Business_Storage) Reset() {
@@ -1240,6 +1258,20 @@ func (x *Business_Storage) GetDefaultProvider() string {
 		return x.DefaultProvider
 	}
 	return ""
+}
+
+func (x *Business_Storage) GetMultipartChunkSize() int64 {
+	if x != nil {
+		return x.MultipartChunkSize
+	}
+	return 0
+}
+
+func (x *Business_Storage) GetMaxConcurrentUploads() int32 {
+	if x != nil {
+		return x.MaxConcurrentUploads
+	}
+	return 0
 }
 
 type Business_KafkaTopics struct {
@@ -1331,7 +1363,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x94\r\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xb3\r\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12,\n" +
 	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12,\n" +
@@ -1362,7 +1394,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"bucketName\x12\x16\n" +
 	"\x06region\x18\x05 \x01(\tR\x06region\x12\x17\n" +
 	"\ause_ssl\x18\x06 \x01(\bR\x06useSsl\x12\x19\n" +
-	"\bbase_url\x18\a \x01(\tR\abaseUrl\x1a\xb3\x01\n" +
+	"\bbase_url\x18\a \x01(\tR\abaseUrl\x1a\xd2\x01\n" +
 	"\x05Qiniu\x12\x1d\n" +
 	"\n" +
 	"access_key\x18\x01 \x01(\tR\taccessKey\x12\x1d\n" +
@@ -1372,7 +1404,9 @@ const file_conf_conf_proto_rawDesc = "" +
 	"bucketName\x12\x16\n" +
 	"\x06domain\x18\x04 \x01(\tR\x06domain\x12\x16\n" +
 	"\x06region\x18\x05 \x01(\tR\x06region\x12\x1b\n" +
-	"\tuse_https\x18\x06 \x01(\bR\buseHttps\x1a\xa2\x04\n" +
+	"\tuse_https\x18\x06 \x01(\bR\buseHttps\x12\x1d\n" +
+	"\n" +
+	"record_dir\x18\a \x01(\tR\trecordDir\x1a\xa2\x04\n" +
 	"\x05Kafka\x12\x18\n" +
 	"\abrokers\x18\x01 \x03(\tR\abrokers\x12;\n" +
 	"\bproducer\x18\x02 \x01(\v2\x1f.kratos.api.Data.Kafka.ProducerR\bproducer\x12;\n" +
@@ -1393,7 +1427,8 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x03JWT\x12\x16\n" +
 	"\x06secret\x18\x01 \x01(\tR\x06secret\x12:\n" +
 	"\vexpire_time\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\n" +
-	"expireTime\"\xa5\t\n" +
+	"expireTime\"\xa8\n" +
+	"\n" +
 	"\bBusiness\x12-\n" +
 	"\x04user\x18\x01 \x01(\v2\x19.kratos.api.Business.UserR\x04user\x120\n" +
 	"\x05video\x18\x02 \x01(\v2\x1a.kratos.api.Business.VideoR\x05video\x126\n" +
@@ -1404,7 +1439,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x13username_min_length\x18\x02 \x01(\x05R\x11usernameMinLength\x12.\n" +
 	"\x13username_max_length\x18\x03 \x01(\x05R\x11usernameMaxLength\x12.\n" +
 	"\x13password_min_length\x18\x04 \x01(\x05R\x11passwordMinLength\x12.\n" +
-	"\x13password_max_length\x18\x05 \x01(\x05R\x11passwordMaxLength\x1a\x99\x02\n" +
+	"\x13password_max_length\x18\x05 \x01(\x05R\x11passwordMaxLength\x1a\xb4\x02\n" +
 	"\x05Video\x12\"\n" +
 	"\rmax_file_size\x18\x01 \x01(\x03R\vmaxFileSize\x12(\n" +
 	"\x10max_title_length\x18\x02 \x01(\x05R\x0emaxTitleLength\x12,\n" +
@@ -1413,12 +1448,15 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\rcover_quality\x18\x05 \x01(\x05R\fcoverQuality\x12\x1f\n" +
 	"\vcover_width\x18\x06 \x01(\x05R\n" +
 	"coverWidth\x12!\n" +
-	"\fcover_height\x18\a \x01(\x05R\vcoverHeight\x1a\x89\x02\n" +
+	"\fcover_height\x18\a \x01(\x05R\vcoverHeight\x12\x19\n" +
+	"\btemp_dir\x18\b \x01(\tR\atempDir\x1a\xf1\x02\n" +
 	"\aStorage\x12@\n" +
 	"\x0eupload_timeout\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\ruploadTimeout\x12D\n" +
 	"\x10download_timeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x0fdownloadTimeout\x12K\n" +
 	"\x14presigned_url_expire\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x12presignedUrlExpire\x12)\n" +
-	"\x10default_provider\x18\x04 \x01(\tR\x0fdefaultProvider\x1a\x97\x01\n" +
+	"\x10default_provider\x18\x04 \x01(\tR\x0fdefaultProvider\x120\n" +
+	"\x14multipart_chunk_size\x18\x05 \x01(\x03R\x12multipartChunkSize\x124\n" +
+	"\x16max_concurrent_uploads\x18\x06 \x01(\x05R\x14maxConcurrentUploads\x1a\x97\x01\n" +
 	"\vKafkaTopics\x12!\n" +
 	"\fvideo_upload\x18\x01 \x01(\tR\vvideoUpload\x12#\n" +
 	"\rvideo_process\x18\x02 \x01(\tR\fvideoProcess\x12\x1f\n" +

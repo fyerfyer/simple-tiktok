@@ -20,15 +20,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	VideoService_GetFeed_FullMethodName           = "/video.v1.VideoService/GetFeed"
-	VideoService_PublishVideo_FullMethodName      = "/video.v1.VideoService/PublishVideo"
-	VideoService_UploadVideoFile_FullMethodName   = "/video.v1.VideoService/UploadVideoFile"
-	VideoService_GetPublishList_FullMethodName    = "/video.v1.VideoService/GetPublishList"
-	VideoService_GetUploadConfig_FullMethodName   = "/video.v1.VideoService/GetUploadConfig"
-	VideoService_GetUploadProgress_FullMethodName = "/video.v1.VideoService/GetUploadProgress"
-	VideoService_GetVideoInfo_FullMethodName      = "/video.v1.VideoService/GetVideoInfo"
-	VideoService_GetVideosInfo_FullMethodName     = "/video.v1.VideoService/GetVideosInfo"
-	VideoService_UpdateVideoStats_FullMethodName  = "/video.v1.VideoService/UpdateVideoStats"
+	VideoService_GetFeed_FullMethodName                 = "/video.v1.VideoService/GetFeed"
+	VideoService_PublishVideo_FullMethodName            = "/video.v1.VideoService/PublishVideo"
+	VideoService_UploadVideoFile_FullMethodName         = "/video.v1.VideoService/UploadVideoFile"
+	VideoService_GetPublishList_FullMethodName          = "/video.v1.VideoService/GetPublishList"
+	VideoService_GetUploadConfig_FullMethodName         = "/video.v1.VideoService/GetUploadConfig"
+	VideoService_GetUploadProgress_FullMethodName       = "/video.v1.VideoService/GetUploadProgress"
+	VideoService_GetVideoInfo_FullMethodName            = "/video.v1.VideoService/GetVideoInfo"
+	VideoService_GetVideosInfo_FullMethodName           = "/video.v1.VideoService/GetVideosInfo"
+	VideoService_UpdateVideoStats_FullMethodName        = "/video.v1.VideoService/UpdateVideoStats"
+	VideoService_InitiateMultipartUpload_FullMethodName = "/video.v1.VideoService/InitiateMultipartUpload"
+	VideoService_UploadPart_FullMethodName              = "/video.v1.VideoService/UploadPart"
+	VideoService_CompleteMultipartUpload_FullMethodName = "/video.v1.VideoService/CompleteMultipartUpload"
+	VideoService_AbortMultipartUpload_FullMethodName    = "/video.v1.VideoService/AbortMultipartUpload"
+	VideoService_ListUploadedParts_FullMethodName       = "/video.v1.VideoService/ListUploadedParts"
 )
 
 // VideoServiceClient is the client API for VideoService service.
@@ -53,6 +58,16 @@ type VideoServiceClient interface {
 	GetVideoInfo(ctx context.Context, in *GetVideoInfoRequest, opts ...grpc.CallOption) (*GetVideoInfoResponse, error)
 	GetVideosInfo(ctx context.Context, in *GetVideosInfoRequest, opts ...grpc.CallOption) (*GetVideosInfoResponse, error)
 	UpdateVideoStats(ctx context.Context, in *UpdateVideoStatsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// 初始化分片上传
+	InitiateMultipartUpload(ctx context.Context, in *InitiateMultipartUploadRequest, opts ...grpc.CallOption) (*InitiateMultipartUploadResponse, error)
+	// 上传分片
+	UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error)
+	// 完成分片上传
+	CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*PublishVideoResponse, error)
+	// 取消分片上传
+	AbortMultipartUpload(ctx context.Context, in *AbortMultipartUploadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// 列出已上传的分片
+	ListUploadedParts(ctx context.Context, in *ListUploadedPartsRequest, opts ...grpc.CallOption) (*ListUploadedPartsResponse, error)
 }
 
 type videoServiceClient struct {
@@ -153,6 +168,56 @@ func (c *videoServiceClient) UpdateVideoStats(ctx context.Context, in *UpdateVid
 	return out, nil
 }
 
+func (c *videoServiceClient) InitiateMultipartUpload(ctx context.Context, in *InitiateMultipartUploadRequest, opts ...grpc.CallOption) (*InitiateMultipartUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InitiateMultipartUploadResponse)
+	err := c.cc.Invoke(ctx, VideoService_InitiateMultipartUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UploadPartResponse)
+	err := c.cc.Invoke(ctx, VideoService_UploadPart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*PublishVideoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublishVideoResponse)
+	err := c.cc.Invoke(ctx, VideoService_CompleteMultipartUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) AbortMultipartUpload(ctx context.Context, in *AbortMultipartUploadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, VideoService_AbortMultipartUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) ListUploadedParts(ctx context.Context, in *ListUploadedPartsRequest, opts ...grpc.CallOption) (*ListUploadedPartsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUploadedPartsResponse)
+	err := c.cc.Invoke(ctx, VideoService_ListUploadedParts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VideoServiceServer is the server API for VideoService service.
 // All implementations must embed UnimplementedVideoServiceServer
 // for forward compatibility.
@@ -175,6 +240,16 @@ type VideoServiceServer interface {
 	GetVideoInfo(context.Context, *GetVideoInfoRequest) (*GetVideoInfoResponse, error)
 	GetVideosInfo(context.Context, *GetVideosInfoRequest) (*GetVideosInfoResponse, error)
 	UpdateVideoStats(context.Context, *UpdateVideoStatsRequest) (*emptypb.Empty, error)
+	// 初始化分片上传
+	InitiateMultipartUpload(context.Context, *InitiateMultipartUploadRequest) (*InitiateMultipartUploadResponse, error)
+	// 上传分片
+	UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error)
+	// 完成分片上传
+	CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*PublishVideoResponse, error)
+	// 取消分片上传
+	AbortMultipartUpload(context.Context, *AbortMultipartUploadRequest) (*emptypb.Empty, error)
+	// 列出已上传的分片
+	ListUploadedParts(context.Context, *ListUploadedPartsRequest) (*ListUploadedPartsResponse, error)
 	mustEmbedUnimplementedVideoServiceServer()
 }
 
@@ -211,6 +286,21 @@ func (UnimplementedVideoServiceServer) GetVideosInfo(context.Context, *GetVideos
 }
 func (UnimplementedVideoServiceServer) UpdateVideoStats(context.Context, *UpdateVideoStatsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateVideoStats not implemented")
+}
+func (UnimplementedVideoServiceServer) InitiateMultipartUpload(context.Context, *InitiateMultipartUploadRequest) (*InitiateMultipartUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitiateMultipartUpload not implemented")
+}
+func (UnimplementedVideoServiceServer) UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadPart not implemented")
+}
+func (UnimplementedVideoServiceServer) CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*PublishVideoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteMultipartUpload not implemented")
+}
+func (UnimplementedVideoServiceServer) AbortMultipartUpload(context.Context, *AbortMultipartUploadRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AbortMultipartUpload not implemented")
+}
+func (UnimplementedVideoServiceServer) ListUploadedParts(context.Context, *ListUploadedPartsRequest) (*ListUploadedPartsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUploadedParts not implemented")
 }
 func (UnimplementedVideoServiceServer) mustEmbedUnimplementedVideoServiceServer() {}
 func (UnimplementedVideoServiceServer) testEmbeddedByValue()                      {}
@@ -395,6 +485,96 @@ func _VideoService_UpdateVideoStats_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VideoService_InitiateMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitiateMultipartUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).InitiateMultipartUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_InitiateMultipartUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).InitiateMultipartUpload(ctx, req.(*InitiateMultipartUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_UploadPart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadPartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).UploadPart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_UploadPart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).UploadPart(ctx, req.(*UploadPartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_CompleteMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteMultipartUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).CompleteMultipartUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_CompleteMultipartUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).CompleteMultipartUpload(ctx, req.(*CompleteMultipartUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_AbortMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AbortMultipartUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).AbortMultipartUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_AbortMultipartUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).AbortMultipartUpload(ctx, req.(*AbortMultipartUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_ListUploadedParts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUploadedPartsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).ListUploadedParts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_ListUploadedParts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).ListUploadedParts(ctx, req.(*ListUploadedPartsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VideoService_ServiceDesc is the grpc.ServiceDesc for VideoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -437,6 +617,26 @@ var VideoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateVideoStats",
 			Handler:    _VideoService_UpdateVideoStats_Handler,
+		},
+		{
+			MethodName: "InitiateMultipartUpload",
+			Handler:    _VideoService_InitiateMultipartUpload_Handler,
+		},
+		{
+			MethodName: "UploadPart",
+			Handler:    _VideoService_UploadPart_Handler,
+		},
+		{
+			MethodName: "CompleteMultipartUpload",
+			Handler:    _VideoService_CompleteMultipartUpload_Handler,
+		},
+		{
+			MethodName: "AbortMultipartUpload",
+			Handler:    _VideoService_AbortMultipartUpload_Handler,
+		},
+		{
+			MethodName: "ListUploadedParts",
+			Handler:    _VideoService_ListUploadedParts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

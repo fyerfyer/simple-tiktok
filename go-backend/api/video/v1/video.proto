@@ -62,6 +62,45 @@ service VideoService {
   rpc GetVideoInfo(GetVideoInfoRequest) returns (GetVideoInfoResponse);
   rpc GetVideosInfo(GetVideosInfoRequest) returns (GetVideosInfoResponse);
   rpc UpdateVideoStats(UpdateVideoStatsRequest) returns (google.protobuf.Empty);
+
+  // 初始化分片上传
+  rpc InitiateMultipartUpload(InitiateMultipartUploadRequest) returns (InitiateMultipartUploadResponse) {
+    option (google.api.http) = {
+      post: "/douyin/upload/multipart/initiate"
+      body: "*"
+    };
+  }
+
+  // 上传分片
+  rpc UploadPart(UploadPartRequest) returns (UploadPartResponse) {
+    option (google.api.http) = {
+      post: "/douyin/upload/multipart/part"
+      body: "*"
+    };
+  }
+
+  // 完成分片上传
+  rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (PublishVideoResponse) {
+    option (google.api.http) = {
+      post: "/douyin/upload/multipart/complete"
+      body: "*"
+    };
+  }
+
+  // 取消分片上传
+  rpc AbortMultipartUpload(AbortMultipartUploadRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/douyin/upload/multipart/abort"
+      body: "*"
+    };
+  }
+
+  // 列出已上传的分片
+  rpc ListUploadedParts(ListUploadedPartsRequest) returns (ListUploadedPartsResponse) {
+    option (google.api.http) = {
+      get: "/douyin/upload/multipart/{upload_id}/parts"
+    };
+  }
 }
 
 // 获取视频流请求
@@ -231,4 +270,95 @@ enum UpdateVideoStatsType {
   UPDATE_VIDEO_STATS_COMMENT_COUNT = 2;   // 评论数
   UPDATE_VIDEO_STATS_PLAY_COUNT = 3;      // 播放数
   UPDATE_VIDEO_STATS_SHARE_COUNT = 4;     // 分享数
+}
+
+// 初始化分片上传请求
+message InitiateMultipartUploadRequest {
+  string token = 1;
+  string filename = 2;
+  int64 file_size = 3;
+  string content_type = 4;
+  string title = 5;
+}
+
+// 初始化分片上传响应
+message InitiateMultipartUploadResponse {
+  common.v1.BaseResponse base = 1;
+  MultipartUploadInfo data = 2;
+}
+
+// 分片上传信息
+message MultipartUploadInfo {
+  string upload_id = 1;
+  int64 chunk_size = 2;
+  int32 total_parts = 3;
+  map<string, string> upload_urls = 4; // 分片上传URL（如果需要）
+}
+
+// 上传分片请求
+message UploadPartRequest {
+  string token = 1;
+  string upload_id = 2;
+  int32 part_number = 3;
+  bytes data = 4;
+  int64 size = 5;
+}
+
+// 上传分片响应
+message UploadPartResponse {
+  common.v1.BaseResponse base = 1;
+  PartInfo data = 2;
+}
+
+// 分片信息
+message PartInfo {
+  int32 part_number = 1;
+  string etag = 2;
+  int64 size = 3;
+}
+
+// 完成分片上传请求
+message CompleteMultipartUploadRequest {
+  string token = 1;
+  string upload_id = 2;
+  repeated PartInfo parts = 3;
+  string title = 4;
+}
+
+// 取消分片上传请求
+message AbortMultipartUploadRequest {
+  string token = 1;
+  string upload_id = 2;
+}
+
+// 列出已上传分片请求
+message ListUploadedPartsRequest {
+  string token = 1;
+  string upload_id = 2;
+}
+
+// 列出已上传分片响应
+message ListUploadedPartsResponse {
+  common.v1.BaseResponse base = 1;
+  ListUploadedPartsData data = 2;
+}
+
+// 已上传分片数据
+message ListUploadedPartsData {
+  repeated PartInfo parts = 1;
+  int32 total_parts = 2;
+  int64 uploaded_size = 3;
+}
+
+// 扩展现有的UploadProgress消息（如果需要更详细的进度信息）
+message UploadProgressDetail {
+  string upload_id = 1;
+  int32 progress = 2;
+  UploadStatus status = 3;
+  int64 total_size = 4;
+  int64 uploaded_size = 5;
+  string error_message = 6;
+  int64 estimated_time = 7;
+  repeated PartInfo completed_parts = 8; // 已完成的分片
+  int32 total_parts = 9;
 }

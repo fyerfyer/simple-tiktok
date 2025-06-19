@@ -10,6 +10,7 @@ import (
 	context "context"
 	http "github.com/go-kratos/kratos/v2/transport/http"
 	binding "github.com/go-kratos/kratos/v2/transport/http/binding"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,14 +20,23 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
+const OperationVideoServiceAbortMultipartUpload = "/video.v1.VideoService/AbortMultipartUpload"
+const OperationVideoServiceCompleteMultipartUpload = "/video.v1.VideoService/CompleteMultipartUpload"
 const OperationVideoServiceGetFeed = "/video.v1.VideoService/GetFeed"
 const OperationVideoServiceGetPublishList = "/video.v1.VideoService/GetPublishList"
 const OperationVideoServiceGetUploadConfig = "/video.v1.VideoService/GetUploadConfig"
 const OperationVideoServiceGetUploadProgress = "/video.v1.VideoService/GetUploadProgress"
+const OperationVideoServiceInitiateMultipartUpload = "/video.v1.VideoService/InitiateMultipartUpload"
+const OperationVideoServiceListUploadedParts = "/video.v1.VideoService/ListUploadedParts"
 const OperationVideoServicePublishVideo = "/video.v1.VideoService/PublishVideo"
+const OperationVideoServiceUploadPart = "/video.v1.VideoService/UploadPart"
 const OperationVideoServiceUploadVideoFile = "/video.v1.VideoService/UploadVideoFile"
 
 type VideoServiceHTTPServer interface {
+	// AbortMultipartUpload 取消分片上传
+	AbortMultipartUpload(context.Context, *AbortMultipartUploadRequest) (*emptypb.Empty, error)
+	// CompleteMultipartUpload 完成分片上传
+	CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*PublishVideoResponse, error)
 	// GetFeed 获取视频流
 	GetFeed(context.Context, *GetFeedRequest) (*GetFeedResponse, error)
 	// GetPublishList 获取发布列表
@@ -35,8 +45,14 @@ type VideoServiceHTTPServer interface {
 	GetUploadConfig(context.Context, *GetUploadConfigRequest) (*GetUploadConfigResponse, error)
 	// GetUploadProgress 获取上传进度
 	GetUploadProgress(context.Context, *GetUploadProgressRequest) (*GetUploadProgressResponse, error)
+	// InitiateMultipartUpload 初始化分片上传
+	InitiateMultipartUpload(context.Context, *InitiateMultipartUploadRequest) (*InitiateMultipartUploadResponse, error)
+	// ListUploadedParts 列出已上传的分片
+	ListUploadedParts(context.Context, *ListUploadedPartsRequest) (*ListUploadedPartsResponse, error)
 	// PublishVideo 视频上传 - 支持multipart form data
 	PublishVideo(context.Context, *PublishVideoRequest) (*PublishVideoResponse, error)
+	// UploadPart 上传分片
+	UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error)
 	// UploadVideoFile 文件上传处理 - 专门用于处理multipart文件上传
 	UploadVideoFile(context.Context, *UploadVideoFileRequest) (*PublishVideoResponse, error)
 }
@@ -50,6 +66,11 @@ func RegisterVideoServiceHTTPServer(s *http.Server, srv VideoServiceHTTPServer) 
 	r.GET("/douyin/publish/list", _VideoService_GetPublishList0_HTTP_Handler(srv))
 	r.GET("/douyin/upload/config", _VideoService_GetUploadConfig0_HTTP_Handler(srv))
 	r.GET("/douyin/upload/progress/{upload_id}", _VideoService_GetUploadProgress0_HTTP_Handler(srv))
+	r.POST("/douyin/upload/multipart/initiate", _VideoService_InitiateMultipartUpload0_HTTP_Handler(srv))
+	r.POST("/douyin/upload/multipart/part", _VideoService_UploadPart0_HTTP_Handler(srv))
+	r.POST("/douyin/upload/multipart/complete", _VideoService_CompleteMultipartUpload0_HTTP_Handler(srv))
+	r.POST("/douyin/upload/multipart/abort", _VideoService_AbortMultipartUpload0_HTTP_Handler(srv))
+	r.GET("/douyin/upload/multipart/{upload_id}/parts", _VideoService_ListUploadedParts0_HTTP_Handler(srv))
 }
 
 func _VideoService_GetFeed0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
@@ -194,12 +215,127 @@ func _VideoService_GetUploadProgress0_HTTP_Handler(srv VideoServiceHTTPServer) f
 	}
 }
 
+func _VideoService_InitiateMultipartUpload0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in InitiateMultipartUploadRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationVideoServiceInitiateMultipartUpload)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.InitiateMultipartUpload(ctx, req.(*InitiateMultipartUploadRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*InitiateMultipartUploadResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _VideoService_UploadPart0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in UploadPartRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationVideoServiceUploadPart)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.UploadPart(ctx, req.(*UploadPartRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*UploadPartResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _VideoService_CompleteMultipartUpload0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CompleteMultipartUploadRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationVideoServiceCompleteMultipartUpload)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CompleteMultipartUpload(ctx, req.(*CompleteMultipartUploadRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*PublishVideoResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _VideoService_AbortMultipartUpload0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AbortMultipartUploadRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationVideoServiceAbortMultipartUpload)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AbortMultipartUpload(ctx, req.(*AbortMultipartUploadRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*emptypb.Empty)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _VideoService_ListUploadedParts0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ListUploadedPartsRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationVideoServiceListUploadedParts)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ListUploadedParts(ctx, req.(*ListUploadedPartsRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*ListUploadedPartsResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
 type VideoServiceHTTPClient interface {
+	AbortMultipartUpload(ctx context.Context, req *AbortMultipartUploadRequest, opts ...http.CallOption) (rsp *emptypb.Empty, err error)
+	CompleteMultipartUpload(ctx context.Context, req *CompleteMultipartUploadRequest, opts ...http.CallOption) (rsp *PublishVideoResponse, err error)
 	GetFeed(ctx context.Context, req *GetFeedRequest, opts ...http.CallOption) (rsp *GetFeedResponse, err error)
 	GetPublishList(ctx context.Context, req *GetPublishListRequest, opts ...http.CallOption) (rsp *GetPublishListResponse, err error)
 	GetUploadConfig(ctx context.Context, req *GetUploadConfigRequest, opts ...http.CallOption) (rsp *GetUploadConfigResponse, err error)
 	GetUploadProgress(ctx context.Context, req *GetUploadProgressRequest, opts ...http.CallOption) (rsp *GetUploadProgressResponse, err error)
+	InitiateMultipartUpload(ctx context.Context, req *InitiateMultipartUploadRequest, opts ...http.CallOption) (rsp *InitiateMultipartUploadResponse, err error)
+	ListUploadedParts(ctx context.Context, req *ListUploadedPartsRequest, opts ...http.CallOption) (rsp *ListUploadedPartsResponse, err error)
 	PublishVideo(ctx context.Context, req *PublishVideoRequest, opts ...http.CallOption) (rsp *PublishVideoResponse, err error)
+	UploadPart(ctx context.Context, req *UploadPartRequest, opts ...http.CallOption) (rsp *UploadPartResponse, err error)
 	UploadVideoFile(ctx context.Context, req *UploadVideoFileRequest, opts ...http.CallOption) (rsp *PublishVideoResponse, err error)
 }
 
@@ -209,6 +345,32 @@ type VideoServiceHTTPClientImpl struct {
 
 func NewVideoServiceHTTPClient(client *http.Client) VideoServiceHTTPClient {
 	return &VideoServiceHTTPClientImpl{client}
+}
+
+func (c *VideoServiceHTTPClientImpl) AbortMultipartUpload(ctx context.Context, in *AbortMultipartUploadRequest, opts ...http.CallOption) (*emptypb.Empty, error) {
+	var out emptypb.Empty
+	pattern := "/douyin/upload/multipart/abort"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationVideoServiceAbortMultipartUpload))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *VideoServiceHTTPClientImpl) CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...http.CallOption) (*PublishVideoResponse, error) {
+	var out PublishVideoResponse
+	pattern := "/douyin/upload/multipart/complete"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationVideoServiceCompleteMultipartUpload))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *VideoServiceHTTPClientImpl) GetFeed(ctx context.Context, in *GetFeedRequest, opts ...http.CallOption) (*GetFeedResponse, error) {
@@ -263,11 +425,50 @@ func (c *VideoServiceHTTPClientImpl) GetUploadProgress(ctx context.Context, in *
 	return &out, nil
 }
 
+func (c *VideoServiceHTTPClientImpl) InitiateMultipartUpload(ctx context.Context, in *InitiateMultipartUploadRequest, opts ...http.CallOption) (*InitiateMultipartUploadResponse, error) {
+	var out InitiateMultipartUploadResponse
+	pattern := "/douyin/upload/multipart/initiate"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationVideoServiceInitiateMultipartUpload))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *VideoServiceHTTPClientImpl) ListUploadedParts(ctx context.Context, in *ListUploadedPartsRequest, opts ...http.CallOption) (*ListUploadedPartsResponse, error) {
+	var out ListUploadedPartsResponse
+	pattern := "/douyin/upload/multipart/{upload_id}/parts"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationVideoServiceListUploadedParts))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *VideoServiceHTTPClientImpl) PublishVideo(ctx context.Context, in *PublishVideoRequest, opts ...http.CallOption) (*PublishVideoResponse, error) {
 	var out PublishVideoResponse
 	pattern := "/douyin/publish/action"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationVideoServicePublishVideo))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *VideoServiceHTTPClientImpl) UploadPart(ctx context.Context, in *UploadPartRequest, opts ...http.CallOption) (*UploadPartResponse, error) {
+	var out UploadPartResponse
+	pattern := "/douyin/upload/multipart/part"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationVideoServiceUploadPart))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {

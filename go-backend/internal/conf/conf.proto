@@ -60,6 +60,7 @@ message Data {
     string domain = 4;
     string region = 5;
     bool use_https = 6;
+    string record_dir = 7;  // 断点续传记录目录
   }
   message Kafka {
     repeated string brokers = 1;
@@ -110,12 +111,15 @@ message Business {
     int32 cover_quality = 5;
     int32 cover_width = 6;
     int32 cover_height = 7;
+    string temp_dir = 8;  // 视频处理临时目录
   }
   message Storage {
     google.protobuf.Duration upload_timeout = 1;
     google.protobuf.Duration download_timeout = 2;
     google.protobuf.Duration presigned_url_expire = 3;
     string default_provider = 4;
+    int64 multipart_chunk_size = 5;  // 分片大小
+    int32 max_concurrent_uploads = 6; // 最大并发上传数
   }
   message KafkaTopics {
     string video_upload = 1;

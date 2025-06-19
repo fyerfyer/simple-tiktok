@@ -61,6 +61,18 @@ type VideoStorage interface {
 	GenerateCoverURL(ctx context.Context, objectName string) (string, error)
 }
 
+// MultipartStorage 分片上传存储接口
+type MultipartStorage interface {
+	Storage
+	MultipartUpload
+}
+
+// ResumableStorage 断点续传存储接口
+type ResumableStorage interface {
+	MultipartStorage
+	ResumableUpload
+}
+
 // Provider 存储提供商类型
 type Provider string
 

@@ -39,6 +39,7 @@ data:
     domain: your_domain.com
     region: z0
     use_https: true
+    record_dir: /tmp/qiniu_resume  # 断点续传记录目录
 
   kafka:
     brokers:
@@ -78,12 +79,15 @@ business:
     cover_quality: 80
     cover_width: 720
     cover_height: 1280
+    temp_dir: /tmp/video_process  # 视频处理临时目录
 
   storage:
     upload_timeout: 30s
     download_timeout: 10s
     presigned_url_expire: 3600s  # 1小时
-    default_praovider: qiniu  # qiniu or minio
+    default_provider: qiniu  # qiniu or minio
+    multipart_chunk_size: 4194304  # 4MB分片大小
+    max_concurrent_uploads: 3      # 最大并发上传数
 
   kafka_topics:
     video_upload: video-upload-topic

@@ -7,6 +7,7 @@ toolchain go1.23.10
 require (
 	github.com/IBM/sarama v1.45.2
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/disintegration/imaging v1.6.2
 	github.com/go-kratos/kratos/v2 v2.8.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.8.1
@@ -15,6 +16,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.94
 	github.com/qiniu/go-sdk/v7 v7.25.4
 	github.com/stretchr/testify v1.10.0
+	github.com/u2takey/ffmpeg-go v0.5.0
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/crypto v0.38.0
 	golang.org/x/time v0.12.0
@@ -31,6 +33,7 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/alex-ant/gomath v0.0.0-20160516115720-89013a210a82 // indirect
+	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -60,6 +63,7 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/minio/crc64nvme v1.0.1 // indirect
@@ -71,11 +75,13 @@ require (
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
+	github.com/u2takey/go-utils v0.3.1 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.24.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
+	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
