@@ -266,3 +266,13 @@ func (v *Validator) ValidatePassword(password string) error {
 func (v *Validator) ValidateEmail(email string) error {
 	return ValidateEmail(email)
 }
+
+// ValidateVideoTitle 验证视频标题
+func (v *Validator) ValidateVideoTitle(title string) error {
+	return ValidateVideoTitle(title)
+}
+
+// ValidateComment 验证评论内容
+func (v *Validator) ValidateComment(content string) error {
+	return ValidateComment(content)
+}

@@ -1,9 +1,11 @@
 package data
 
 import (
+	"go-backend/internal/biz"
 	"go-backend/internal/conf"
 	"go-backend/internal/data/cache"
 	pkgcache "go-backend/pkg/cache"
+	"go-backend/pkg/storage"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -22,8 +24,11 @@ var ProviderSet = wire.NewSet(
 	NewRoleRepo,
 	NewPermissionRepo,
 	NewSessionRepo,
+	NewVideoRepo,
+	NewMinIOStorage,
 	NewUserCache,
 	NewAuthCache,
+	NewVideoCache,
 	NewMultiLevelCache,
 )
 
@@ -100,4 +105,24 @@ func NewUserCache(multiCache *pkgcache.MultiLevelCache, logger log.Logger) *cach
 // NewAuthCache create auth cache
 func NewAuthCache(multiCache *pkgcache.MultiLevelCache, logger log.Logger) *cache.AuthCache {
 	return cache.NewAuthCache(multiCache, logger)
+}
+
+// NewMinIOStorage create MinIO storage
+func NewMinIOStorage(c *conf.Data, logger log.Logger) (storage.VideoStorage, error) {
+	config := &storage.MinIOConfig{
+		Endpoint:   c.Minio.Endpoint,
+		AccessKey:  c.Minio.AccessKey,
+		SecretKey:  c.Minio.SecretKey,
+		BucketName: c.Minio.BucketName,
+		Region:     c.Minio.Region,
+		UseSSL:     c.Minio.UseSsl,
+		BaseURL:    c.Minio.BaseUrl,
+	}
+
+	return storage.NewMinIOStorage(config)
+}
+
+// NewVideoCache create video cache
+func NewVideoCache(multiCache *pkgcache.MultiLevelCache, logger log.Logger) biz.VideoCacheRepo {
+	return cache.NewVideoCache(multiCache, logger)
 }

@@ -1,7 +1,8 @@
 package server
 
 import (
-	v1 "go-backend/api/user/v1"
+	userv1 "go-backend/api/user/v1"
+	videov1 "go-backend/api/video/v1"
 	"go-backend/internal/conf"
 	"go-backend/internal/middleware"
 	"go-backend/internal/service"
@@ -19,11 +20,12 @@ import (
 func NewHTTPServer(
 	c *conf.Server,
 	userService *service.UserService,
+	videoService *service.VideoService,
 	authMiddleware *middleware.AuthMiddleware,
 	rbacMiddleware *middleware.RBACMiddleware,
 	rateLimitMiddleware *middleware.RateLimitMiddleware,
 	securityMiddleware *middleware.SecurityMiddleware,
-
+	videoMiddleware *middleware.VideoMiddleware,
 	logger log.Logger,
 ) *http.Server {
 	// 需要认证的路由中间件
@@ -35,6 +37,8 @@ func NewHTTPServer(
 		"/douyin/relation/follow/list",
 		"/douyin/relation/follower/list",
 		"/douyin/relation/friend/list",
+		"/douyin/publish/action",
+		"/douyin/publish/list",
 	).Build()
 
 	// 可选认证的路由中间件
@@ -59,17 +63,27 @@ func NewHTTPServer(
 	// 安全中间件
 	security := securityMiddleware.GlobalSecurityHandler()
 
+	// 视频中间件
+	videoFileUploadValidator := videoMiddleware.FileUploadValidator()
+	videoFileSizelimitor := videoMiddleware.FileSizeLimit()
+	videoTitleValidator := videoMiddleware.VideoTitleValidator()
+	videoFormatValidator := videoMiddleware.VideoFormatValidator()
+
 	var opts = []http.ServerOption{
 		http.Middleware(
-			recovery.Recovery(),    // 恢复中间件
-			logging.Server(logger), // 日志中间件
-			metrics.Server(),       // 指标中间件
-			validate.Validator(),   // 验证器中间件
-			security,               // 全局安全中间件
-			rateLimiter,            // 限流中间件
-			authRequired,           // 认证中间件
-			optionalAuth,           // 可选认证中间件
-			permissionRequired,     // 权限中间件
+			recovery.Recovery(),      // 恢复中间件
+			logging.Server(logger),   // 日志中间件
+			metrics.Server(),         // 指标中间件
+			validate.Validator(),     // 验证器中间件
+			security,                 // 全局安全中间件
+			rateLimiter,              // 限流中间件
+			authRequired,             // 认证中间件
+			optionalAuth,             // 可选认证中间件
+			permissionRequired,       // 权限中间件
+			videoFileUploadValidator, // 视频文件上传验证中间件
+			videoFileSizelimitor,     // 视频文件大小限制中间件
+			videoTitleValidator,      // 视频标题验证中间件
+			videoFormatValidator,     // 视频文件类型验证中间件
 		),
 	}
 
@@ -86,7 +100,10 @@ func NewHTTPServer(
 	srv := http.NewServer(opts...)
 
 	// 注册用户服务HTTP路由
-	v1.RegisterUserServiceHTTPServer(srv, userService)
+	userv1.RegisterUserServiceHTTPServer(srv, userService)
+
+	// 注册视频服务HTTP路由
+	videov1.RegisterVideoServiceHTTPServer(srv, videoService)
 
 	return srv
 }

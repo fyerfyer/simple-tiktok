@@ -10,4 +10,5 @@ var ProviderSet = wire.NewSet(
 	NewRBACMiddleware,
 	NewRateLimitMiddleware,
 	NewSecurityMiddleware,
+	NewVideoMiddleware,
 )

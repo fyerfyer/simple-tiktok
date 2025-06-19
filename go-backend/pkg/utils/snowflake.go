@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/bwmarrin/snowflake"
@@ -13,11 +15,10 @@ const (
 
 	workerIDBits     = 5
 	dataCenterIDBits = 5
-	maxWorkerID      = -1 ^ (-1 << workerIDBits)     // 31
-	maxDataCenter    = -1 ^ (-1 << dataCenterIDBits) // 31
+	maxWorkerID      = -1 ^ (-1 << workerIDBits)
+	maxDataCenter    = -1 ^ (-1 << dataCenterIDBits)
 )
 
-// globalNode 存储 snowflake 节点实例
 var globalNode *snowflake.Node
 var initOnce sync.Once
 
@@ -32,12 +33,9 @@ func InitSnowflake(workerID, dataCenterID int64) error {
 
 	var err error
 	initOnce.Do(func() {
-		// 设置自定义 Epoch
 		snowflake.Epoch = customEpoch
 	})
 
-	// 将 workerID 和 dataCenterID 组合成一个10位的节点ID。
-	// (workerID << dataCenterIDBits) | dataCenterID
 	nodeID := (workerID << dataCenterIDBits) | dataCenterID
 
 	var n *snowflake.Node
@@ -54,7 +52,6 @@ func GenerateID() (int64, error) {
 	if globalNode == nil {
 		return 0, errors.New("snowflake generator not initialized, call InitSnowflake first")
 	}
-	// 返回 snowflake.ID 类型
 	return globalNode.Generate().Int64(), nil
 }
 
@@ -64,4 +61,26 @@ func MustGenerateID() int64 {
 		panic("snowflake generator not initialized, call InitSnowflake first")
 	}
 	return globalNode.Generate().Int64()
+}
+
+// GenerateEventID 生成事件ID
+func GenerateEventID() string {
+	id := MustGenerateID()
+	return fmt.Sprintf("evt_%d", id)
+}
+
+// GenerateVideoFilename 生成唯一视频文件名
+func GenerateVideoFilename(originalName string) string {
+	id := MustGenerateID()
+	ext := ""
+	if idx := strings.LastIndex(originalName, "."); idx != -1 {
+		ext = originalName[idx:]
+	}
+	return fmt.Sprintf("video_%d%s", id, ext)
+}
+
+// GenerateCoverFilename 生成封面文件名
+func GenerateCoverFilename(videoFilename string) string {
+	name := strings.TrimSuffix(videoFilename, filepath.Ext(videoFilename))
+	return fmt.Sprintf("%s_cover.jpg", name)
 }

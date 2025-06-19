@@ -3,10 +3,115 @@
 
 openapi: 3.0.3
 info:
-    title: UserService API
-    description: 用户服务
+    title: ""
     version: 0.0.1
 paths:
+    /douyin/feed:
+        get:
+            tags:
+                - VideoService
+            description: 获取视频流
+            operationId: VideoService_GetFeed
+            parameters:
+                - name: latestTime
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.GetFeedResponse'
+    /douyin/publish/action:
+        post:
+            tags:
+                - VideoService
+            description: 视频上传 - 支持multipart form data
+            operationId: VideoService_PublishVideo
+            parameters:
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+                - name: data
+                  in: query
+                  schema:
+                    type: string
+                    format: bytes
+                - name: fileInfo.filename
+                  in: query
+                  schema:
+                    type: string
+                - name: fileInfo.contentType
+                  in: query
+                  schema:
+                    type: string
+                - name: fileInfo.fileSize
+                  in: query
+                  schema:
+                    type: string
+                - name: fileInfo.uploadId
+                  in: query
+                  schema:
+                    type: string
+                - name: title
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.PublishVideoResponse'
+    /douyin/publish/list:
+        get:
+            tags:
+                - VideoService
+            description: 获取发布列表
+            operationId: VideoService_GetPublishList
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.GetPublishListResponse'
+    /douyin/publish/upload:
+        post:
+            tags:
+                - VideoService
+            description: 文件上传处理 - 专门用于处理multipart文件上传
+            operationId: VideoService_UploadVideoFile
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.v1.UploadVideoFileRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.PublishVideoResponse'
     /douyin/relation/action:
         post:
             tags:
@@ -92,6 +197,47 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/user.v1.GetFriendListResponse'
+    /douyin/upload/config:
+        get:
+            tags:
+                - VideoService
+            description: 获取上传配置
+            operationId: VideoService_GetUploadConfig
+            parameters:
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.GetUploadConfigResponse'
+    /douyin/upload/progress/{uploadId}:
+        get:
+            tags:
+                - VideoService
+            description: 获取上传进度
+            operationId: VideoService_GetUploadProgress
+            parameters:
+                - name: uploadId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.v1.GetUploadProgressResponse'
     /douyin/user:
         get:
             tags:
@@ -189,6 +335,28 @@ components:
                 favoriteCount:
                     type: string
             description: 用户信息
+        common.v1.Video:
+            type: object
+            properties:
+                id:
+                    type: string
+                author:
+                    $ref: '#/components/schemas/common.v1.User'
+                playUrl:
+                    type: string
+                coverUrl:
+                    type: string
+                favoriteCount:
+                    type: string
+                commentCount:
+                    type: string
+                isFavorite:
+                    type: boolean
+                title:
+                    type: string
+                createdAt:
+                    type: string
+            description: 视频信息
         user.v1.FriendUser:
             type: object
             properties:
@@ -340,5 +508,166 @@ components:
                 base:
                     $ref: '#/components/schemas/common.v1.BaseResponse'
             description: 关注操作响应
+        video.v1.FileMetadata:
+            type: object
+            properties:
+                filename:
+                    type: string
+                contentType:
+                    type: string
+                fileSize:
+                    type: string
+                checksum:
+                    type: string
+                extra:
+                    type: object
+                    additionalProperties:
+                        type: string
+            description: 文件元数据
+        video.v1.FileUploadInfo:
+            type: object
+            properties:
+                filename:
+                    type: string
+                contentType:
+                    type: string
+                fileSize:
+                    type: string
+                uploadId:
+                    type: string
+            description: 文件上传信息
+        video.v1.GetFeedData:
+            type: object
+            properties:
+                nextTime:
+                    type: string
+                videoList:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/common.v1.Video'
+        video.v1.GetFeedResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.GetFeedData'
+            description: 获取视频流响应
+        video.v1.GetPublishListData:
+            type: object
+            properties:
+                videoList:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/common.v1.Video'
+        video.v1.GetPublishListResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.GetPublishListData'
+            description: 获取发布列表响应
+        video.v1.GetUploadConfigResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.UploadConfig'
+            description: 获取上传配置响应
+        video.v1.GetUploadProgressResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.UploadProgress'
+            description: 获取上传进度响应
+        video.v1.PublishVideoData:
+            type: object
+            properties:
+                videoId:
+                    type: string
+                uploadId:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        video.v1.PublishVideoRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                data:
+                    type: string
+                    format: bytes
+                fileInfo:
+                    $ref: '#/components/schemas/video.v1.FileUploadInfo'
+                title:
+                    type: string
+            description: 视频上传请求 - 支持两种方式
+        video.v1.PublishVideoResponse:
+            type: object
+            properties:
+                base:
+                    $ref: '#/components/schemas/common.v1.BaseResponse'
+                data:
+                    $ref: '#/components/schemas/video.v1.PublishVideoData'
+            description: 视频上传响应
+        video.v1.UploadConfig:
+            type: object
+            properties:
+                maxFileSize:
+                    type: string
+                supportedFormats:
+                    type: array
+                    items:
+                        type: string
+                chunkSize:
+                    type: string
+                enableResume:
+                    type: boolean
+                maxConcurrentUploads:
+                    type: integer
+                    format: int32
+                extraConfig:
+                    type: object
+                    additionalProperties:
+                        type: string
+            description: 上传配置
+        video.v1.UploadProgress:
+            type: object
+            properties:
+                uploadId:
+                    type: string
+                progress:
+                    type: integer
+                    format: int32
+                status:
+                    type: integer
+                    format: enum
+                totalSize:
+                    type: string
+                uploadedSize:
+                    type: string
+                errorMessage:
+                    type: string
+                estimatedTime:
+                    type: string
+            description: 上传进度
+        video.v1.UploadVideoFileRequest:
+            type: object
+            properties:
+                token:
+                    type: string
+                title:
+                    type: string
+                metadata:
+                    $ref: '#/components/schemas/video.v1.FileMetadata'
+            description: 文件上传请求 - 专门处理multipart上传
 tags:
     - name: UserService
+      description: 用户服务
+    - name: VideoService
+      description: 视频服务

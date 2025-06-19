@@ -26,7 +26,7 @@ func NewAuthMiddleware(jwtManager *auth.JWTManager, logger log.Logger) *AuthMidd
 	}
 }
 
-// JWT认证中间件
+// JWTAuth JWT认证中间件
 func (a *AuthMiddleware) JWTAuth() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -40,24 +40,22 @@ func (a *AuthMiddleware) JWTAuth() middleware.Middleware {
 				return nil, NewAuthError(v1.ErrorCode_TOKEN_INVALID, "token required")
 			}
 
-			// 验证Token
 			claims, err := a.jwtManager.VerifyToken(token)
 			if err != nil {
 				a.log.WithContext(ctx).Warnf("invalid token: %v", err)
 				return nil, NewAuthError(v1.ErrorCode_TOKEN_INVALID, "invalid token")
 			}
 
-			// 注入用户信息到上下文
-			ctx = context.WithValue(ctx, "user_id", claims.UserID)
-			ctx = context.WithValue(ctx, "username", claims.Username)
-			ctx = context.WithValue(ctx, "token_id", claims.TokenID)
+			ctx = WithUserID(ctx, claims.UserID)
+			ctx = WithUsername(ctx, claims.Username)
+			ctx = WithTokenID(ctx, claims.TokenID)
 
 			return handler(ctx, req)
 		}
 	}
 }
 
-// 可选JWT认证中间件
+// OptionalJWTAuth 可选JWT认证中间件
 func (a *AuthMiddleware) OptionalJWTAuth() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -70,10 +68,9 @@ func (a *AuthMiddleware) OptionalJWTAuth() middleware.Middleware {
 			if token != "" {
 				claims, err := a.jwtManager.VerifyToken(token)
 				if err == nil {
-					// 注入用户信息到上下文
-					ctx = context.WithValue(ctx, "user_id", claims.UserID)
-					ctx = context.WithValue(ctx, "username", claims.Username)
-					ctx = context.WithValue(ctx, "token_id", claims.TokenID)
+					ctx = WithUserID(ctx, claims.UserID)
+					ctx = WithUsername(ctx, claims.Username)
+					ctx = WithTokenID(ctx, claims.TokenID)
 				}
 			}
 
@@ -91,33 +88,29 @@ func (a *AuthMiddleware) RefreshTokenAuth() middleware.Middleware {
 				return nil, errors.New("transport not found")
 			}
 
-			// 从请求中提取刷新Token
 			refreshToken := a.extractRefreshToken(tr)
 			if refreshToken == "" {
 				return nil, NewAuthError(v1.ErrorCode_TOKEN_INVALID, "refresh token required")
 			}
 
-			// 验证刷新Token
 			claims, err := a.jwtManager.VerifyRefreshToken(refreshToken)
 			if err != nil {
 				a.log.WithContext(ctx).Warnf("invalid refresh token: %v", err)
 				return nil, NewAuthError(v1.ErrorCode_TOKEN_INVALID, "invalid refresh token")
 			}
 
-			// 注入用户信息到上下文
-			ctx = context.WithValue(ctx, "user_id", claims.UserID)
-			ctx = context.WithValue(ctx, "username", claims.Username)
-			ctx = context.WithValue(ctx, "refresh_token", refreshToken)
-			ctx = context.WithValue(ctx, "token_id", claims.TokenID)
+			ctx = WithUserID(ctx, claims.UserID)
+			ctx = WithUsername(ctx, claims.Username)
+			ctx = WithRefreshToken(ctx, refreshToken)
+			ctx = WithTokenID(ctx, claims.TokenID)
 
 			return handler(ctx, req)
 		}
 	}
 }
 
-// 从请求中提取Token
+// extractToken 从请求中提取Token
 func (a *AuthMiddleware) extractToken(tr transport.Transporter) string {
-	// 从Header中获取
 	if header := tr.RequestHeader(); header != nil {
 		if auth := header.Get("Authorization"); auth != "" {
 			if strings.HasPrefix(auth, "Bearer ") {
@@ -125,14 +118,11 @@ func (a *AuthMiddleware) extractToken(tr transport.Transporter) string {
 			}
 		}
 
-		// 直接从token header获取
 		if token := header.Get("token"); token != "" {
 			return token
 		}
 	}
 
-	// 从Query参数中获取
-	// 检查是否为 HTTP transport 并从Query参数中获取
 	if ht, ok := tr.(http.Transporter); ok {
 		req := ht.Request()
 		if token := req.URL.Query().Get("token"); token != "" {
@@ -143,16 +133,14 @@ func (a *AuthMiddleware) extractToken(tr transport.Transporter) string {
 	return ""
 }
 
-// 从请求中提取Refresh Token
+// extractRefreshToken 从请求中提取Refresh Token
 func (a *AuthMiddleware) extractRefreshToken(tr transport.Transporter) string {
-	// 从Header中获取
 	if header := tr.RequestHeader(); header != nil {
 		if token := header.Get("refresh_token"); token != "" {
 			return token
 		}
 	}
 
-	// 从Query参数中获取
 	if ht, ok := tr.(http.Transporter); ok {
 		req := ht.Request()
 		if token := req.URL.Query().Get("refresh_token"); token != "" {
@@ -163,31 +151,19 @@ func (a *AuthMiddleware) extractRefreshToken(tr transport.Transporter) string {
 	return ""
 }
 
-// 从上下文中获取用户ID
-func GetUserIDFromContext(ctx context.Context) (int64, bool) {
-	userID, ok := ctx.Value("user_id").(int64)
+// GetUserIDFromToken 从Token解析用户ID
+func GetUserIDFromToken(ctx context.Context, token string) (int64, bool) {
+	// 这是一个简化实现，实际项目中应该注入JWTManager
+	if token == "" {
+		return 0, false
+	}
+
+	// 临时实现：从上下文获取
+	userID, ok := GetUserIDFromContext(ctx)
 	return userID, ok
 }
 
-// 从上下文中获取用户名
-func GetUsernameFromContext(ctx context.Context) (string, bool) {
-	username, ok := ctx.Value("username").(string)
-	return username, ok
-}
-
-// 从上下文中获取TokenID
-func GetTokenIDFromContext(ctx context.Context) (string, bool) {
-	tokenID, ok := ctx.Value("token_id").(string)
-	return tokenID, ok
-}
-
-// 从上下文中获取刷新Token
-func GetRefreshTokenFromContext(ctx context.Context) (string, bool) {
-	refreshToken, ok := ctx.Value("refresh_token").(string)
-	return refreshToken, ok
-}
-
-// 创建认证错误
+// NewAuthError 创建认证错误
 func NewAuthError(code v1.ErrorCode, message string) error {
 	return errors.New(message)
 }

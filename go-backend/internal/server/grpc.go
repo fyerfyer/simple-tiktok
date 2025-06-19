@@ -1,10 +1,10 @@
-// filepath: go-backend/internal/server/grpc.go
 package server
 
 import (
 	"context"
 
-	v1 "go-backend/api/user/v1"
+	userv1 "go-backend/api/user/v1"
+	videov1 "go-backend/api/video/v1"
 	"go-backend/internal/conf"
 	"go-backend/internal/middleware"
 	"go-backend/internal/service"
@@ -22,10 +22,12 @@ import (
 func NewGRPCServer(
 	c *conf.Server,
 	userService *service.UserService,
+	videoService *service.VideoService,
 	authMiddleware *middleware.AuthMiddleware,
+	videoMiddleware *middleware.VideoMiddleware,
 	logger log.Logger,
 ) *grpc.Server {
-	// 需要认证的gRPC方法选择器 - 使用正确的函数签名
+	// 需要认证的gRPC方法选择器
 	authRequired := selector.Server(
 		authMiddleware.JWTAuth(),
 	).Match(func(ctx context.Context, operation string) bool {
@@ -35,6 +37,9 @@ func NewGRPCServer(
 			"/user.v1.UserService/GetUsersInfo",
 			"/user.v1.UserService/VerifyToken",
 			"/user.v1.UserService/UpdateUserStats",
+			"/video.v1.VideoService/GetVideoInfo",
+			"/video.v1.VideoService/GetVideosInfo",
+			"/video.v1.VideoService/UpdateVideoStats",
 		}
 
 		for _, method := range internalMethods {
@@ -47,6 +52,7 @@ func NewGRPCServer(
 		publicMethods := []string{
 			"/user.v1.UserService/Register",
 			"/user.v1.UserService/Login",
+			"/video.v1.VideoService/GetFeed",
 		}
 
 		for _, method := range publicMethods {
@@ -58,13 +64,22 @@ func NewGRPCServer(
 		return true
 	}).Build()
 
+	videoFileUploadValidator := videoMiddleware.FileUploadValidator()
+	videoFileSizelimitor := videoMiddleware.FileSizeLimit()
+	videoTitleValidator := videoMiddleware.VideoTitleValidator()
+	videoFormatValidator := videoMiddleware.VideoFormatValidator()
+
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			recovery.Recovery(),
 			logging.Server(logger),
 			metrics.Server(),
 			validate.Validator(),
-			authRequired, // 在这里配置认证中间件
+			authRequired,             // 认证中间件
+			videoFileUploadValidator, // 视频文件上传验证中间件
+			videoFileSizelimitor,     // 视频文件大小限制中间件
+			videoTitleValidator,      // 视频标题验证中间件
+			videoFormatValidator,     // 视频文件类型验证中间件
 		),
 	}
 
@@ -80,8 +95,11 @@ func NewGRPCServer(
 
 	srv := grpc.NewServer(opts...)
 
-	// 注册用户服务gRPC（只传两个参数）
-	v1.RegisterUserServiceServer(srv, userService)
+	// 注册用户服务gRPC
+	userv1.RegisterUserServiceServer(srv, userService)
+
+	// 注册视频服务gRPC
+	videov1.RegisterVideoServiceServer(srv, videoService)
 
 	return srv
 }

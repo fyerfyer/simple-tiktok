@@ -12,10 +12,13 @@ import (
 	"go-backend/internal/biz"
 	"go-backend/internal/conf"
 	"go-backend/internal/data"
+	"go-backend/internal/data/producer"
 	"go-backend/internal/middleware"
 	"go-backend/internal/server"
 	"go-backend/internal/service"
 	"go-backend/pkg/auth"
+	"go-backend/pkg/media"
+	"go-backend/pkg/messaging"
 	"go-backend/pkg/security"
 )
 
@@ -26,7 +29,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, bootstrap *conf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, business *conf.Business, bootstrap *conf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
 	dataData, cleanup, err := data.NewData(confData, logger)
 	if err != nil {
 		return nil, nil, err
@@ -49,13 +52,26 @@ func wireApp(confServer *conf.Server, confData *conf.Data, bootstrap *conf.Boots
 	permissionUsecase := biz.NewPermissionUsecase(roleRepo, permissionRepo, rbacManager, logger)
 	validator := newValidator()
 	userService := service.NewUserService(userUsecase, relationUsecase, authUsecase, permissionUsecase, jwtManager, validator, logger)
+	videoStorage, err := data.NewMinIOStorage(confData, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	videoCacheRepo := data.NewVideoCache(multiLevelCache, logger)
+	kafkaManager := newKafkaManager(confData, logger)
+	videoEventPublisher := producer.NewVideoEventProducer(kafkaManager, business, logger)
+	videoRepo := data.NewVideoRepo(dataData, videoStorage, videoCacheRepo, videoEventPublisher, logger)
+	videoUsecase := biz.NewVideoUseCase(videoRepo, videoCacheRepo, videoStorage, kafkaManager, business, logger)
+	videoProcessor := newVideoProcessor(business)
+	videoService := service.NewVideoService(videoUsecase, userUsecase, validator, videoProcessor, logger)
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager, logger)
-	grpcServer := server.NewGRPCServer(confServer, userService, authMiddleware, logger)
+	videoMiddleware := middleware.NewVideoMiddleware(videoProcessor, logger)
+	grpcServer := server.NewGRPCServer(confServer, userService, videoService, authMiddleware, videoMiddleware, logger)
 	permissionChecker := newSimplePermissionChecker(rbacManager)
 	rbacMiddleware := middleware.NewRBACMiddleware(permissionChecker, logger)
 	rateLimitMiddleware := middleware.NewRateLimitMiddleware(logger)
 	securityMiddleware := middleware.NewSecurityMiddleware(validator, logger)
-	httpServer := server.NewHTTPServer(confServer, userService, authMiddleware, rbacMiddleware, rateLimitMiddleware, securityMiddleware, logger)
+	httpServer := server.NewHTTPServer(confServer, userService, videoService, authMiddleware, rbacMiddleware, rateLimitMiddleware, securityMiddleware, videoMiddleware, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()
@@ -90,4 +106,19 @@ func newValidator() *security.Validator {
 
 func newSessionManager() auth.SessionManager {
 	return auth.NewMemorySessionManager()
+}
+
+func newKafkaManager(dc *conf.Data, logger log.Logger) *messaging.KafkaManager {
+	kafkaManager, _ := messaging.NewKafkaManager(dc.Kafka, logger)
+	return kafkaManager
+}
+
+func newVideoProcessor(bc *conf.Business) *media.VideoProcessor {
+	return media.NewVideoProcessor(
+		bc.Video.MaxFileSize,
+		bc.Video.SupportedFormats,
+		int(bc.Video.CoverWidth),
+		int(bc.Video.CoverHeight),
+		int(bc.Video.CoverQuality),
+	)
 }

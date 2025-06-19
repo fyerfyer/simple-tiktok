@@ -25,6 +25,12 @@ var (
 	// 关系相关错误
 	ErrAlreadyFollow = NewBadRequestError(v1.ErrorCode_ALREADY_FOLLOW, "already followed")
 	ErrNotFollow     = NewBadRequestError(v1.ErrorCode_NOT_FOLLOW, "not following")
+
+	// 视频相关错误
+	ErrVideoNotFound   = NewNotFoundError(v1.ErrorCode_VIDEO_NOT_EXIST, "video not found")
+	ErrVideoUploadFail = NewBadRequestError(v1.ErrorCode_VIDEO_UPLOAD_FAIL, "video upload failed")
+	ErrVideoFormatErr  = NewBadRequestError(v1.ErrorCode_VIDEO_FORMAT_ERR, "invalid video format")
+	ErrVideoSizeErr    = NewBadRequestError(v1.ErrorCode_VIDEO_SIZE_ERR, "video size too large")
 )
 
 // NewBadRequestError 创建400错误
@@ -79,6 +85,14 @@ func GetErrorCode(err error) v1.ErrorCode {
 			return v1.ErrorCode_USER_NOT_EXIST
 		case v1.ErrorCode_USER_EXIST.String():
 			return v1.ErrorCode_USER_EXIST
+		case v1.ErrorCode_VIDEO_NOT_EXIST.String():
+			return v1.ErrorCode_VIDEO_NOT_EXIST
+		case v1.ErrorCode_VIDEO_UPLOAD_FAIL.String():
+			return v1.ErrorCode_VIDEO_UPLOAD_FAIL
+		case v1.ErrorCode_VIDEO_FORMAT_ERR.String():
+			return v1.ErrorCode_VIDEO_FORMAT_ERR
+		case v1.ErrorCode_VIDEO_SIZE_ERR.String():
+			return v1.ErrorCode_VIDEO_SIZE_ERR
 		default:
 			return v1.ErrorCode_SERVER_ERROR
 		}

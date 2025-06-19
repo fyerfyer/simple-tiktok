@@ -7,10 +7,13 @@ import (
 	"go-backend/internal/biz"
 	"go-backend/internal/conf"
 	"go-backend/internal/data"
+	"go-backend/internal/data/producer"
 	"go-backend/internal/middleware"
 	"go-backend/internal/server"
 	"go-backend/internal/service"
 	"go-backend/pkg/auth"
+	"go-backend/pkg/media"
+	"go-backend/pkg/messaging"
 	"go-backend/pkg/security"
 
 	"github.com/go-kratos/kratos/v2"
@@ -19,14 +22,14 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Data, *conf.Bootstrap, log.Logger) (*kratos.App, func(), error) {
+func wireApp(*conf.Server, *conf.Data, *conf.Business, *conf.Bootstrap, log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		// 各层的ProviderSet
 		server.ProviderSet,
 		data.ProviderSet,
 		biz.ProviderSet,
 		service.ProviderSet,
 		middleware.ProviderSet,
+		producer.ProviderSet,
 
 		// pkg层的providers
 		newJWTManager,
@@ -34,7 +37,9 @@ func wireApp(*conf.Server, *conf.Data, *conf.Bootstrap, log.Logger) (*kratos.App
 		newMemoryRBACManager,
 		newSimplePermissionChecker,
 		newValidator,
-		newSessionManager, // 添加这个
+		newSessionManager,
+		newKafkaManager,
+		newVideoProcessor,
 
 		// 接口绑定
 		wire.Bind(new(biz.AuthRepo), new(*data.SessionRepo)),
@@ -72,4 +77,19 @@ func newValidator() *security.Validator {
 
 func newSessionManager() auth.SessionManager {
 	return auth.NewMemorySessionManager()
+}
+
+func newKafkaManager(dc *conf.Data, logger log.Logger) *messaging.KafkaManager {
+	kafkaManager, _ := messaging.NewKafkaManager(dc.Kafka, logger)
+	return kafkaManager
+}
+
+func newVideoProcessor(bc *conf.Business) *media.VideoProcessor {
+	return media.NewVideoProcessor(
+		bc.Video.MaxFileSize,
+		bc.Video.SupportedFormats,
+		int(bc.Video.CoverWidth),
+		int(bc.Video.CoverHeight),
+		int(bc.Video.CoverQuality),
+	)
 }

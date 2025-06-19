@@ -23,6 +23,38 @@ data:
     write_timeout: 0.2s
     pool_size: 100
 
+  minio:
+    endpoint: minio:9000
+    access_key: minioadmin
+    secret_key: minioadmin123
+    bucket_name: tiktok-videos
+    region: us-east-1
+    use_ssl: false
+    base_url: http://localhost:9000/tiktok-videos
+
+  qiniu:
+    access_key: your_qiniu_access_key
+    secret_key: your_qiniu_secret_key
+    bucket_name: tiktok-videos
+    domain: your_domain.com
+    region: z0
+    use_https: true
+
+  kafka:
+    brokers:
+      - kafka:29092
+    producer:
+      retry_max: 3
+      batch_size: 16384
+      linger_ms: 10
+      compression_type: snappy
+    consumer:
+      group_id: tiktok-video-service
+      auto_commit: true
+      session_timeout: 10s
+      fetch_min_bytes: 1
+      fetch_max_wait: 500ms
+
 jwt:
   secret: tiktok-jwt-secret-key-2024
   expire_time: 604800s
@@ -34,3 +66,27 @@ business:
     username_max_length: 32
     password_min_length: 6
     password_max_length: 20
+
+  video:
+    max_file_size: 104857600  # 100MB
+    max_title_length: 50
+    default_feed_limit: 30
+    supported_formats:
+      - "video/mp4"
+      - "video/avi"
+      - "video/quicktime"
+    cover_quality: 80
+    cover_width: 720
+    cover_height: 1280
+
+  storage:
+    upload_timeout: 30s
+    download_timeout: 10s
+    presigned_url_expire: 3600s  # 1小时
+    default_praovider: qiniu  # qiniu or minio
+
+  kafka_topics:
+    video_upload: video-upload-topic
+    video_process: video-process-topic
+    video_stats: video-stats-topic
+    user_action: user-action-topic

@@ -146,6 +146,9 @@ type Data struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Database      *Data_Database         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Redis         *Data_Redis            `protobuf:"bytes,2,opt,name=redis,proto3" json:"redis,omitempty"`
+	Minio         *Data_MinIO            `protobuf:"bytes,3,opt,name=minio,proto3" json:"minio,omitempty"`
+	Qiniu         *Data_Qiniu            `protobuf:"bytes,4,opt,name=qiniu,proto3" json:"qiniu,omitempty"`
+	Kafka         *Data_Kafka            `protobuf:"bytes,5,opt,name=kafka,proto3" json:"kafka,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -190,6 +193,27 @@ func (x *Data) GetDatabase() *Data_Database {
 func (x *Data) GetRedis() *Data_Redis {
 	if x != nil {
 		return x.Redis
+	}
+	return nil
+}
+
+func (x *Data) GetMinio() *Data_MinIO {
+	if x != nil {
+		return x.Minio
+	}
+	return nil
+}
+
+func (x *Data) GetQiniu() *Data_Qiniu {
+	if x != nil {
+		return x.Qiniu
+	}
+	return nil
+}
+
+func (x *Data) GetKafka() *Data_Kafka {
+	if x != nil {
+		return x.Kafka
 	}
 	return nil
 }
@@ -249,6 +273,9 @@ func (x *JWT) GetExpireTime() *durationpb.Duration {
 type Business struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	User          *Business_User         `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	Video         *Business_Video        `protobuf:"bytes,2,opt,name=video,proto3" json:"video,omitempty"`
+	Storage       *Business_Storage      `protobuf:"bytes,3,opt,name=storage,proto3" json:"storage,omitempty"`
+	KafkaTopics   *Business_KafkaTopics  `protobuf:"bytes,4,opt,name=kafka_topics,json=kafkaTopics,proto3" json:"kafka_topics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -286,6 +313,27 @@ func (*Business) Descriptor() ([]byte, []int) {
 func (x *Business) GetUser() *Business_User {
 	if x != nil {
 		return x.User
+	}
+	return nil
+}
+
+func (x *Business) GetVideo() *Business_Video {
+	if x != nil {
+		return x.Video
+	}
+	return nil
+}
+
+func (x *Business) GetStorage() *Business_Storage {
+	if x != nil {
+		return x.Storage
+	}
+	return nil
+}
+
+func (x *Business) GetKafkaTopics() *Business_KafkaTopics {
+	if x != nil {
+		return x.KafkaTopics
 	}
 	return nil
 }
@@ -578,6 +626,386 @@ func (x *Data_Redis) GetPoolSize() int32 {
 	return 0
 }
 
+type Data_MinIO struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	AccessKey     string                 `protobuf:"bytes,2,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	SecretKey     string                 `protobuf:"bytes,3,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	BucketName    string                 `protobuf:"bytes,4,opt,name=bucket_name,json=bucketName,proto3" json:"bucket_name,omitempty"`
+	Region        string                 `protobuf:"bytes,5,opt,name=region,proto3" json:"region,omitempty"`
+	UseSsl        bool                   `protobuf:"varint,6,opt,name=use_ssl,json=useSsl,proto3" json:"use_ssl,omitempty"`
+	BaseUrl       string                 `protobuf:"bytes,7,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_MinIO) Reset() {
+	*x = Data_MinIO{}
+	mi := &file_conf_conf_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_MinIO) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_MinIO) ProtoMessage() {}
+
+func (x *Data_MinIO) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_MinIO.ProtoReflect.Descriptor instead.
+func (*Data_MinIO) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 2}
+}
+
+func (x *Data_MinIO) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *Data_MinIO) GetAccessKey() string {
+	if x != nil {
+		return x.AccessKey
+	}
+	return ""
+}
+
+func (x *Data_MinIO) GetSecretKey() string {
+	if x != nil {
+		return x.SecretKey
+	}
+	return ""
+}
+
+func (x *Data_MinIO) GetBucketName() string {
+	if x != nil {
+		return x.BucketName
+	}
+	return ""
+}
+
+func (x *Data_MinIO) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *Data_MinIO) GetUseSsl() bool {
+	if x != nil {
+		return x.UseSsl
+	}
+	return false
+}
+
+func (x *Data_MinIO) GetBaseUrl() string {
+	if x != nil {
+		return x.BaseUrl
+	}
+	return ""
+}
+
+type Data_Qiniu struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccessKey     string                 `protobuf:"bytes,1,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	SecretKey     string                 `protobuf:"bytes,2,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	BucketName    string                 `protobuf:"bytes,3,opt,name=bucket_name,json=bucketName,proto3" json:"bucket_name,omitempty"`
+	Domain        string                 `protobuf:"bytes,4,opt,name=domain,proto3" json:"domain,omitempty"`
+	Region        string                 `protobuf:"bytes,5,opt,name=region,proto3" json:"region,omitempty"`
+	UseHttps      bool                   `protobuf:"varint,6,opt,name=use_https,json=useHttps,proto3" json:"use_https,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_Qiniu) Reset() {
+	*x = Data_Qiniu{}
+	mi := &file_conf_conf_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Qiniu) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Qiniu) ProtoMessage() {}
+
+func (x *Data_Qiniu) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Qiniu.ProtoReflect.Descriptor instead.
+func (*Data_Qiniu) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 3}
+}
+
+func (x *Data_Qiniu) GetAccessKey() string {
+	if x != nil {
+		return x.AccessKey
+	}
+	return ""
+}
+
+func (x *Data_Qiniu) GetSecretKey() string {
+	if x != nil {
+		return x.SecretKey
+	}
+	return ""
+}
+
+func (x *Data_Qiniu) GetBucketName() string {
+	if x != nil {
+		return x.BucketName
+	}
+	return ""
+}
+
+func (x *Data_Qiniu) GetDomain() string {
+	if x != nil {
+		return x.Domain
+	}
+	return ""
+}
+
+func (x *Data_Qiniu) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *Data_Qiniu) GetUseHttps() bool {
+	if x != nil {
+		return x.UseHttps
+	}
+	return false
+}
+
+type Data_Kafka struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Brokers       []string               `protobuf:"bytes,1,rep,name=brokers,proto3" json:"brokers,omitempty"`
+	Producer      *Data_Kafka_Producer   `protobuf:"bytes,2,opt,name=producer,proto3" json:"producer,omitempty"`
+	Consumer      *Data_Kafka_Consumer   `protobuf:"bytes,3,opt,name=consumer,proto3" json:"consumer,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_Kafka) Reset() {
+	*x = Data_Kafka{}
+	mi := &file_conf_conf_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Kafka) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Kafka) ProtoMessage() {}
+
+func (x *Data_Kafka) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Kafka.ProtoReflect.Descriptor instead.
+func (*Data_Kafka) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 4}
+}
+
+func (x *Data_Kafka) GetBrokers() []string {
+	if x != nil {
+		return x.Brokers
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetProducer() *Data_Kafka_Producer {
+	if x != nil {
+		return x.Producer
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetConsumer() *Data_Kafka_Consumer {
+	if x != nil {
+		return x.Consumer
+	}
+	return nil
+}
+
+type Data_Kafka_Producer struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RetryMax        int32                  `protobuf:"varint,1,opt,name=retry_max,json=retryMax,proto3" json:"retry_max,omitempty"`
+	BatchSize       int32                  `protobuf:"varint,2,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
+	LingerMs        int32                  `protobuf:"varint,3,opt,name=linger_ms,json=lingerMs,proto3" json:"linger_ms,omitempty"`
+	CompressionType string                 `protobuf:"bytes,4,opt,name=compression_type,json=compressionType,proto3" json:"compression_type,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Data_Kafka_Producer) Reset() {
+	*x = Data_Kafka_Producer{}
+	mi := &file_conf_conf_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Kafka_Producer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Kafka_Producer) ProtoMessage() {}
+
+func (x *Data_Kafka_Producer) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Kafka_Producer.ProtoReflect.Descriptor instead.
+func (*Data_Kafka_Producer) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 4, 0}
+}
+
+func (x *Data_Kafka_Producer) GetRetryMax() int32 {
+	if x != nil {
+		return x.RetryMax
+	}
+	return 0
+}
+
+func (x *Data_Kafka_Producer) GetBatchSize() int32 {
+	if x != nil {
+		return x.BatchSize
+	}
+	return 0
+}
+
+func (x *Data_Kafka_Producer) GetLingerMs() int32 {
+	if x != nil {
+		return x.LingerMs
+	}
+	return 0
+}
+
+func (x *Data_Kafka_Producer) GetCompressionType() string {
+	if x != nil {
+		return x.CompressionType
+	}
+	return ""
+}
+
+type Data_Kafka_Consumer struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	GroupId        string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	AutoCommit     bool                   `protobuf:"varint,2,opt,name=auto_commit,json=autoCommit,proto3" json:"auto_commit,omitempty"`
+	SessionTimeout *durationpb.Duration   `protobuf:"bytes,3,opt,name=session_timeout,json=sessionTimeout,proto3" json:"session_timeout,omitempty"`
+	FetchMinBytes  int32                  `protobuf:"varint,4,opt,name=fetch_min_bytes,json=fetchMinBytes,proto3" json:"fetch_min_bytes,omitempty"`
+	FetchMaxWait   *durationpb.Duration   `protobuf:"bytes,5,opt,name=fetch_max_wait,json=fetchMaxWait,proto3" json:"fetch_max_wait,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Data_Kafka_Consumer) Reset() {
+	*x = Data_Kafka_Consumer{}
+	mi := &file_conf_conf_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Kafka_Consumer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Kafka_Consumer) ProtoMessage() {}
+
+func (x *Data_Kafka_Consumer) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Kafka_Consumer.ProtoReflect.Descriptor instead.
+func (*Data_Kafka_Consumer) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 4, 1}
+}
+
+func (x *Data_Kafka_Consumer) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *Data_Kafka_Consumer) GetAutoCommit() bool {
+	if x != nil {
+		return x.AutoCommit
+	}
+	return false
+}
+
+func (x *Data_Kafka_Consumer) GetSessionTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.SessionTimeout
+	}
+	return nil
+}
+
+func (x *Data_Kafka_Consumer) GetFetchMinBytes() int32 {
+	if x != nil {
+		return x.FetchMinBytes
+	}
+	return 0
+}
+
+func (x *Data_Kafka_Consumer) GetFetchMaxWait() *durationpb.Duration {
+	if x != nil {
+		return x.FetchMaxWait
+	}
+	return nil
+}
+
 type Business_User struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	PasswordSaltLength int32                  `protobuf:"varint,1,opt,name=password_salt_length,json=passwordSaltLength,proto3" json:"password_salt_length,omitempty"`
@@ -591,7 +1019,7 @@ type Business_User struct {
 
 func (x *Business_User) Reset() {
 	*x = Business_User{}
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -603,7 +1031,7 @@ func (x *Business_User) String() string {
 func (*Business_User) ProtoMessage() {}
 
 func (x *Business_User) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -654,6 +1082,234 @@ func (x *Business_User) GetPasswordMaxLength() int32 {
 	return 0
 }
 
+type Business_Video struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	MaxFileSize      int64                  `protobuf:"varint,1,opt,name=max_file_size,json=maxFileSize,proto3" json:"max_file_size,omitempty"`
+	MaxTitleLength   int32                  `protobuf:"varint,2,opt,name=max_title_length,json=maxTitleLength,proto3" json:"max_title_length,omitempty"`
+	DefaultFeedLimit int32                  `protobuf:"varint,3,opt,name=default_feed_limit,json=defaultFeedLimit,proto3" json:"default_feed_limit,omitempty"`
+	SupportedFormats []string               `protobuf:"bytes,4,rep,name=supported_formats,json=supportedFormats,proto3" json:"supported_formats,omitempty"`
+	CoverQuality     int32                  `protobuf:"varint,5,opt,name=cover_quality,json=coverQuality,proto3" json:"cover_quality,omitempty"`
+	CoverWidth       int32                  `protobuf:"varint,6,opt,name=cover_width,json=coverWidth,proto3" json:"cover_width,omitempty"`
+	CoverHeight      int32                  `protobuf:"varint,7,opt,name=cover_height,json=coverHeight,proto3" json:"cover_height,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *Business_Video) Reset() {
+	*x = Business_Video{}
+	mi := &file_conf_conf_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Business_Video) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Business_Video) ProtoMessage() {}
+
+func (x *Business_Video) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Business_Video.ProtoReflect.Descriptor instead.
+func (*Business_Video) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1}
+}
+
+func (x *Business_Video) GetMaxFileSize() int64 {
+	if x != nil {
+		return x.MaxFileSize
+	}
+	return 0
+}
+
+func (x *Business_Video) GetMaxTitleLength() int32 {
+	if x != nil {
+		return x.MaxTitleLength
+	}
+	return 0
+}
+
+func (x *Business_Video) GetDefaultFeedLimit() int32 {
+	if x != nil {
+		return x.DefaultFeedLimit
+	}
+	return 0
+}
+
+func (x *Business_Video) GetSupportedFormats() []string {
+	if x != nil {
+		return x.SupportedFormats
+	}
+	return nil
+}
+
+func (x *Business_Video) GetCoverQuality() int32 {
+	if x != nil {
+		return x.CoverQuality
+	}
+	return 0
+}
+
+func (x *Business_Video) GetCoverWidth() int32 {
+	if x != nil {
+		return x.CoverWidth
+	}
+	return 0
+}
+
+func (x *Business_Video) GetCoverHeight() int32 {
+	if x != nil {
+		return x.CoverHeight
+	}
+	return 0
+}
+
+type Business_Storage struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	UploadTimeout      *durationpb.Duration   `protobuf:"bytes,1,opt,name=upload_timeout,json=uploadTimeout,proto3" json:"upload_timeout,omitempty"`
+	DownloadTimeout    *durationpb.Duration   `protobuf:"bytes,2,opt,name=download_timeout,json=downloadTimeout,proto3" json:"download_timeout,omitempty"`
+	PresignedUrlExpire *durationpb.Duration   `protobuf:"bytes,3,opt,name=presigned_url_expire,json=presignedUrlExpire,proto3" json:"presigned_url_expire,omitempty"`
+	DefaultProvider    string                 `protobuf:"bytes,4,opt,name=default_provider,json=defaultProvider,proto3" json:"default_provider,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *Business_Storage) Reset() {
+	*x = Business_Storage{}
+	mi := &file_conf_conf_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Business_Storage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Business_Storage) ProtoMessage() {}
+
+func (x *Business_Storage) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Business_Storage.ProtoReflect.Descriptor instead.
+func (*Business_Storage) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{4, 2}
+}
+
+func (x *Business_Storage) GetUploadTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.UploadTimeout
+	}
+	return nil
+}
+
+func (x *Business_Storage) GetDownloadTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.DownloadTimeout
+	}
+	return nil
+}
+
+func (x *Business_Storage) GetPresignedUrlExpire() *durationpb.Duration {
+	if x != nil {
+		return x.PresignedUrlExpire
+	}
+	return nil
+}
+
+func (x *Business_Storage) GetDefaultProvider() string {
+	if x != nil {
+		return x.DefaultProvider
+	}
+	return ""
+}
+
+type Business_KafkaTopics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VideoUpload   string                 `protobuf:"bytes,1,opt,name=video_upload,json=videoUpload,proto3" json:"video_upload,omitempty"`
+	VideoProcess  string                 `protobuf:"bytes,2,opt,name=video_process,json=videoProcess,proto3" json:"video_process,omitempty"`
+	VideoStats    string                 `protobuf:"bytes,3,opt,name=video_stats,json=videoStats,proto3" json:"video_stats,omitempty"`
+	UserAction    string                 `protobuf:"bytes,4,opt,name=user_action,json=userAction,proto3" json:"user_action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Business_KafkaTopics) Reset() {
+	*x = Business_KafkaTopics{}
+	mi := &file_conf_conf_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Business_KafkaTopics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Business_KafkaTopics) ProtoMessage() {}
+
+func (x *Business_KafkaTopics) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Business_KafkaTopics.ProtoReflect.Descriptor instead.
+func (*Business_KafkaTopics) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{4, 3}
+}
+
+func (x *Business_KafkaTopics) GetVideoUpload() string {
+	if x != nil {
+		return x.VideoUpload
+	}
+	return ""
+}
+
+func (x *Business_KafkaTopics) GetVideoProcess() string {
+	if x != nil {
+		return x.VideoProcess
+	}
+	return ""
+}
+
+func (x *Business_KafkaTopics) GetVideoStats() string {
+	if x != nil {
+		return x.VideoStats
+	}
+	return ""
+}
+
+func (x *Business_KafkaTopics) GetUserAction() string {
+	if x != nil {
+		return x.UserAction
+	}
+	return ""
+}
+
 var File_conf_conf_proto protoreflect.FileDescriptor
 
 const file_conf_conf_proto_rawDesc = "" +
@@ -675,10 +1331,13 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xde\x04\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x94\r\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12,\n" +
-	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x1a\xcd\x01\n" +
+	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12,\n" +
+	"\x05minio\x18\x03 \x01(\v2\x16.kratos.api.Data.MinIOR\x05minio\x12,\n" +
+	"\x05qiniu\x18\x04 \x01(\v2\x16.kratos.api.Data.QiniuR\x05qiniu\x12,\n" +
+	"\x05kafka\x18\x05 \x01(\v2\x16.kratos.api.Data.KafkaR\x05kafka\x1a\xcd\x01\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12$\n" +
@@ -692,19 +1351,81 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\fdial_timeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
 	"\fread_timeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
 	"\rwrite_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x12\x1b\n" +
-	"\tpool_size\x18\a \x01(\x05R\bpoolSize\"Y\n" +
+	"\tpool_size\x18\a \x01(\x05R\bpoolSize\x1a\xce\x01\n" +
+	"\x05MinIO\x12\x1a\n" +
+	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1d\n" +
+	"\n" +
+	"access_key\x18\x02 \x01(\tR\taccessKey\x12\x1d\n" +
+	"\n" +
+	"secret_key\x18\x03 \x01(\tR\tsecretKey\x12\x1f\n" +
+	"\vbucket_name\x18\x04 \x01(\tR\n" +
+	"bucketName\x12\x16\n" +
+	"\x06region\x18\x05 \x01(\tR\x06region\x12\x17\n" +
+	"\ause_ssl\x18\x06 \x01(\bR\x06useSsl\x12\x19\n" +
+	"\bbase_url\x18\a \x01(\tR\abaseUrl\x1a\xb3\x01\n" +
+	"\x05Qiniu\x12\x1d\n" +
+	"\n" +
+	"access_key\x18\x01 \x01(\tR\taccessKey\x12\x1d\n" +
+	"\n" +
+	"secret_key\x18\x02 \x01(\tR\tsecretKey\x12\x1f\n" +
+	"\vbucket_name\x18\x03 \x01(\tR\n" +
+	"bucketName\x12\x16\n" +
+	"\x06domain\x18\x04 \x01(\tR\x06domain\x12\x16\n" +
+	"\x06region\x18\x05 \x01(\tR\x06region\x12\x1b\n" +
+	"\tuse_https\x18\x06 \x01(\bR\buseHttps\x1a\xa2\x04\n" +
+	"\x05Kafka\x12\x18\n" +
+	"\abrokers\x18\x01 \x03(\tR\abrokers\x12;\n" +
+	"\bproducer\x18\x02 \x01(\v2\x1f.kratos.api.Data.Kafka.ProducerR\bproducer\x12;\n" +
+	"\bconsumer\x18\x03 \x01(\v2\x1f.kratos.api.Data.Kafka.ConsumerR\bconsumer\x1a\x8e\x01\n" +
+	"\bProducer\x12\x1b\n" +
+	"\tretry_max\x18\x01 \x01(\x05R\bretryMax\x12\x1d\n" +
+	"\n" +
+	"batch_size\x18\x02 \x01(\x05R\tbatchSize\x12\x1b\n" +
+	"\tlinger_ms\x18\x03 \x01(\x05R\blingerMs\x12)\n" +
+	"\x10compression_type\x18\x04 \x01(\tR\x0fcompressionType\x1a\xf3\x01\n" +
+	"\bConsumer\x12\x19\n" +
+	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1f\n" +
+	"\vauto_commit\x18\x02 \x01(\bR\n" +
+	"autoCommit\x12B\n" +
+	"\x0fsession_timeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x0esessionTimeout\x12&\n" +
+	"\x0ffetch_min_bytes\x18\x04 \x01(\x05R\rfetchMinBytes\x12?\n" +
+	"\x0efetch_max_wait\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\ffetchMaxWait\"Y\n" +
 	"\x03JWT\x12\x16\n" +
 	"\x06secret\x18\x01 \x01(\tR\x06secret\x12:\n" +
 	"\vexpire_time\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\n" +
-	"expireTime\"\xb4\x02\n" +
+	"expireTime\"\xa5\t\n" +
 	"\bBusiness\x12-\n" +
-	"\x04user\x18\x01 \x01(\v2\x19.kratos.api.Business.UserR\x04user\x1a\xf8\x01\n" +
+	"\x04user\x18\x01 \x01(\v2\x19.kratos.api.Business.UserR\x04user\x120\n" +
+	"\x05video\x18\x02 \x01(\v2\x1a.kratos.api.Business.VideoR\x05video\x126\n" +
+	"\astorage\x18\x03 \x01(\v2\x1c.kratos.api.Business.StorageR\astorage\x12C\n" +
+	"\fkafka_topics\x18\x04 \x01(\v2 .kratos.api.Business.KafkaTopicsR\vkafkaTopics\x1a\xf8\x01\n" +
 	"\x04User\x120\n" +
 	"\x14password_salt_length\x18\x01 \x01(\x05R\x12passwordSaltLength\x12.\n" +
 	"\x13username_min_length\x18\x02 \x01(\x05R\x11usernameMinLength\x12.\n" +
 	"\x13username_max_length\x18\x03 \x01(\x05R\x11usernameMaxLength\x12.\n" +
 	"\x13password_min_length\x18\x04 \x01(\x05R\x11passwordMinLength\x12.\n" +
-	"\x13password_max_length\x18\x05 \x01(\x05R\x11passwordMaxLengthB\x1fZ\x1dgo-backend/internal/conf;confb\x06proto3"
+	"\x13password_max_length\x18\x05 \x01(\x05R\x11passwordMaxLength\x1a\x99\x02\n" +
+	"\x05Video\x12\"\n" +
+	"\rmax_file_size\x18\x01 \x01(\x03R\vmaxFileSize\x12(\n" +
+	"\x10max_title_length\x18\x02 \x01(\x05R\x0emaxTitleLength\x12,\n" +
+	"\x12default_feed_limit\x18\x03 \x01(\x05R\x10defaultFeedLimit\x12+\n" +
+	"\x11supported_formats\x18\x04 \x03(\tR\x10supportedFormats\x12#\n" +
+	"\rcover_quality\x18\x05 \x01(\x05R\fcoverQuality\x12\x1f\n" +
+	"\vcover_width\x18\x06 \x01(\x05R\n" +
+	"coverWidth\x12!\n" +
+	"\fcover_height\x18\a \x01(\x05R\vcoverHeight\x1a\x89\x02\n" +
+	"\aStorage\x12@\n" +
+	"\x0eupload_timeout\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\ruploadTimeout\x12D\n" +
+	"\x10download_timeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x0fdownloadTimeout\x12K\n" +
+	"\x14presigned_url_expire\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x12presignedUrlExpire\x12)\n" +
+	"\x10default_provider\x18\x04 \x01(\tR\x0fdefaultProvider\x1a\x97\x01\n" +
+	"\vKafkaTopics\x12!\n" +
+	"\fvideo_upload\x18\x01 \x01(\tR\vvideoUpload\x12#\n" +
+	"\rvideo_process\x18\x02 \x01(\tR\fvideoProcess\x12\x1f\n" +
+	"\vvideo_stats\x18\x03 \x01(\tR\n" +
+	"videoStats\x12\x1f\n" +
+	"\vuser_action\x18\x04 \x01(\tR\n" +
+	"userActionB\x1fZ\x1dgo-backend/internal/conf;confb\x06proto3"
 
 var (
 	file_conf_conf_proto_rawDescOnce sync.Once
@@ -718,19 +1439,27 @@ func file_conf_conf_proto_rawDescGZIP() []byte {
 	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_conf_conf_proto_goTypes = []any{
-	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
-	(*Server)(nil),              // 1: kratos.api.Server
-	(*Data)(nil),                // 2: kratos.api.Data
-	(*JWT)(nil),                 // 3: kratos.api.JWT
-	(*Business)(nil),            // 4: kratos.api.Business
-	(*Server_HTTP)(nil),         // 5: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),         // 6: kratos.api.Server.GRPC
-	(*Data_Database)(nil),       // 7: kratos.api.Data.Database
-	(*Data_Redis)(nil),          // 8: kratos.api.Data.Redis
-	(*Business_User)(nil),       // 9: kratos.api.Business.User
-	(*durationpb.Duration)(nil), // 10: google.protobuf.Duration
+	(*Bootstrap)(nil),            // 0: kratos.api.Bootstrap
+	(*Server)(nil),               // 1: kratos.api.Server
+	(*Data)(nil),                 // 2: kratos.api.Data
+	(*JWT)(nil),                  // 3: kratos.api.JWT
+	(*Business)(nil),             // 4: kratos.api.Business
+	(*Server_HTTP)(nil),          // 5: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),          // 6: kratos.api.Server.GRPC
+	(*Data_Database)(nil),        // 7: kratos.api.Data.Database
+	(*Data_Redis)(nil),           // 8: kratos.api.Data.Redis
+	(*Data_MinIO)(nil),           // 9: kratos.api.Data.MinIO
+	(*Data_Qiniu)(nil),           // 10: kratos.api.Data.Qiniu
+	(*Data_Kafka)(nil),           // 11: kratos.api.Data.Kafka
+	(*Data_Kafka_Producer)(nil),  // 12: kratos.api.Data.Kafka.Producer
+	(*Data_Kafka_Consumer)(nil),  // 13: kratos.api.Data.Kafka.Consumer
+	(*Business_User)(nil),        // 14: kratos.api.Business.User
+	(*Business_Video)(nil),       // 15: kratos.api.Business.Video
+	(*Business_Storage)(nil),     // 16: kratos.api.Business.Storage
+	(*Business_KafkaTopics)(nil), // 17: kratos.api.Business.KafkaTopics
+	(*durationpb.Duration)(nil),  // 18: google.protobuf.Duration
 }
 var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
@@ -741,19 +1470,32 @@ var file_conf_conf_proto_depIdxs = []int32{
 	6,  // 5: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
 	7,  // 6: kratos.api.Data.database:type_name -> kratos.api.Data.Database
 	8,  // 7: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	10, // 8: kratos.api.JWT.expire_time:type_name -> google.protobuf.Duration
-	9,  // 9: kratos.api.Business.user:type_name -> kratos.api.Business.User
-	10, // 10: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	10, // 11: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	10, // 12: kratos.api.Data.Database.conn_max_lifetime:type_name -> google.protobuf.Duration
-	10, // 13: kratos.api.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
-	10, // 14: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	10, // 15: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	9,  // 8: kratos.api.Data.minio:type_name -> kratos.api.Data.MinIO
+	10, // 9: kratos.api.Data.qiniu:type_name -> kratos.api.Data.Qiniu
+	11, // 10: kratos.api.Data.kafka:type_name -> kratos.api.Data.Kafka
+	18, // 11: kratos.api.JWT.expire_time:type_name -> google.protobuf.Duration
+	14, // 12: kratos.api.Business.user:type_name -> kratos.api.Business.User
+	15, // 13: kratos.api.Business.video:type_name -> kratos.api.Business.Video
+	16, // 14: kratos.api.Business.storage:type_name -> kratos.api.Business.Storage
+	17, // 15: kratos.api.Business.kafka_topics:type_name -> kratos.api.Business.KafkaTopics
+	18, // 16: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	18, // 17: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	18, // 18: kratos.api.Data.Database.conn_max_lifetime:type_name -> google.protobuf.Duration
+	18, // 19: kratos.api.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
+	18, // 20: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	18, // 21: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	12, // 22: kratos.api.Data.Kafka.producer:type_name -> kratos.api.Data.Kafka.Producer
+	13, // 23: kratos.api.Data.Kafka.consumer:type_name -> kratos.api.Data.Kafka.Consumer
+	18, // 24: kratos.api.Data.Kafka.Consumer.session_timeout:type_name -> google.protobuf.Duration
+	18, // 25: kratos.api.Data.Kafka.Consumer.fetch_max_wait:type_name -> google.protobuf.Duration
+	18, // 26: kratos.api.Business.Storage.upload_timeout:type_name -> google.protobuf.Duration
+	18, // 27: kratos.api.Business.Storage.download_timeout:type_name -> google.protobuf.Duration
+	18, // 28: kratos.api.Business.Storage.presigned_url_expire:type_name -> google.protobuf.Duration
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_conf_conf_proto_init() }
@@ -767,7 +1509,7 @@ func file_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

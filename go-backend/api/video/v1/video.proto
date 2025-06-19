@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package video.v1;
+
+option go_package = "go-backend/api/video/v1;v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "common/v1/common.proto";
+
+// 视频服务
+service VideoService {
+  // 获取视频流
+  rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {
+    option (google.api.http) = {
+      get: "/douyin/feed"
+    };
+  }
+  
+  // 视频上传 - 支持multipart form data
+  rpc PublishVideo(PublishVideoRequest) returns (PublishVideoResponse) {
+    option (google.api.http) = {
+      post: "/douyin/publish/action"
+      body: "*"
+      additional_bindings {
+        post: "/douyin/publish/action"
+        // 这里不设置body，让框架自动处理multipart form
+      }
+    };
+  }
+  
+  // 文件上传处理 - 专门用于处理multipart文件上传
+  rpc UploadVideoFile(UploadVideoFileRequest) returns (PublishVideoResponse) {
+    option (google.api.http) = {
+      post: "/douyin/publish/upload"
+      body: "*"
+    };
+  }
+  
+  // 获取发布列表
+  rpc GetPublishList(GetPublishListRequest) returns (GetPublishListResponse) {
+    option (google.api.http) = {
+      get: "/douyin/publish/list"
+    };
+  }
+  
+  // 获取上传配置
+  rpc GetUploadConfig(GetUploadConfigRequest) returns (GetUploadConfigResponse) {
+    option (google.api.http) = {
+      get: "/douyin/upload/config"
+    };
+  }
+  
+  // 获取上传进度
+  rpc GetUploadProgress(GetUploadProgressRequest) returns (GetUploadProgressResponse) {
+    option (google.api.http) = {
+      get: "/douyin/upload/progress/{upload_id}"
+    };
+  }
+  
+  // gRPC内部调用接口
+  rpc GetVideoInfo(GetVideoInfoRequest) returns (GetVideoInfoResponse);
+  rpc GetVideosInfo(GetVideosInfoRequest) returns (GetVideosInfoResponse);
+  rpc UpdateVideoStats(UpdateVideoStatsRequest) returns (google.protobuf.Empty);
+}
+
+// 获取视频流请求
+message GetFeedRequest {
+  int64 latest_time = 1;  // 时间戳，可选
+  string token = 2;       // 可选
+}
+
+// 获取视频流响应
+message GetFeedResponse {
+  common.v1.BaseResponse base = 1;
+  GetFeedData data = 2;
+}
+
+message GetFeedData {
+  int64 next_time = 1;
+  repeated common.v1.Video video_list = 2;
+}
+
+// 视频上传请求 - 支持两种方式
+message PublishVideoRequest {
+  string token = 1;       // 必需
+  oneof data_source {
+    bytes data = 2;       // 二进制数据方式
+    FileUploadInfo file_info = 3;  // 文件信息方式
+  }
+  string title = 4;       // 视频标题
+}
+
+// 文件上传信息
+message FileUploadInfo {
+  string filename = 1;    // 原始文件名
+  string content_type = 2; // MIME类型
+  int64 file_size = 3;    // 文件大小
+  string upload_id = 4;   // 上传ID（可选，用于断点续传）
+}
+
+// 文件上传请求 - 专门处理multipart上传
+message UploadVideoFileRequest {
+  string token = 1;       // 必需
+  string title = 2;       // 视频标题
+  FileMetadata metadata = 3; // 文件元数据
+}
+
+// 文件元数据
+message FileMetadata {
+  string filename = 1;     // 文件名
+  string content_type = 2; // MIME类型
+  int64 file_size = 3;     // 文件大小
+  string checksum = 4;     // 文件校验和（可选）
+  map<string, string> extra = 5; // 额外信息
+}
+
+// 视频上传响应
+message PublishVideoResponse {
+  common.v1.BaseResponse base = 1;
+  PublishVideoData data = 2;
+}
+
+message PublishVideoData {
+  int64 video_id = 1;
+  string upload_id = 2;   // 上传ID
+  UploadStatus status = 3; // 上传状态
+}
+
+// 上传状态枚举
+enum UploadStatus {
+  UPLOAD_STATUS_UNKNOWN = 0;
+  UPLOAD_STATUS_UPLOADING = 1;   // 上传中
+  UPLOAD_STATUS_PROCESSING = 2;  // 处理中
+  UPLOAD_STATUS_COMPLETED = 3;   // 完成
+  UPLOAD_STATUS_FAILED = 4;      // 失败
+}
+
+// 获取发布列表请求
+message GetPublishListRequest {
+  int64 user_id = 1;      // 必需
+  string token = 2;       // 必需
+}
+
+// 获取发布列表响应
+message GetPublishListResponse {
+  common.v1.BaseResponse base = 1;
+  GetPublishListData data = 2;
+}
+
+message GetPublishListData {
+  repeated common.v1.Video video_list = 1;
+}
+
+// 获取上传配置请求
+message GetUploadConfigRequest {
+  string token = 1;       // 可选
+}
+
+// 获取上传配置响应
+message GetUploadConfigResponse {
+  common.v1.BaseResponse base = 1;
+  UploadConfig data = 2;
+}
+
+// 上传配置
+message UploadConfig {
+  int64 max_file_size = 1;          // 最大文件大小（字节）
+  repeated string supported_formats = 2; // 支持的格式
+  int64 chunk_size = 3;             // 分片大小
+  bool enable_resume = 4;           // 是否支持断点续传
+  int32 max_concurrent_uploads = 5; // 最大并发上传数
+  map<string, string> extra_config = 6; // 额外配置
+}
+
+// 获取上传进度请求
+message GetUploadProgressRequest {
+  string upload_id = 1;   // 上传ID
+  string token = 2;       // 认证Token
+}
+
+// 获取上传进度响应
+message GetUploadProgressResponse {
+  common.v1.BaseResponse base = 1;
+  UploadProgress data = 2;
+}
+
+// 上传进度
+message UploadProgress {
+  string upload_id = 1;     // 上传ID
+  int32 progress = 2;       // 进度百分比 (0-100)
+  UploadStatus status = 3;  // 状态
+  int64 total_size = 4;     // 总大小
+  int64 uploaded_size = 5;  // 已上传大小
+  string error_message = 6; // 错误信息（如果有）
+  int64 estimated_time = 7; // 预估剩余时间（秒）
+}
+
+// gRPC内部调用 - 获取视频信息请求
+message GetVideoInfoRequest {
+  int64 video_id = 1;
+}
+
+// gRPC内部调用 - 获取视频信息响应
+message GetVideoInfoResponse {
+  common.v1.Video video = 1;
+}
+
+// gRPC内部调用 - 批量获取视频信息请求
+message GetVideosInfoRequest {
+  repeated int64 video_ids = 1;
+}
+
+// gRPC内部调用 - 批量获取视频信息响应
+message GetVideosInfoResponse {
+  repeated common.v1.Video videos = 1;
+}
+
+// gRPC内部调用 - 更新视频统计请求
+message UpdateVideoStatsRequest {
+  int64 video_id = 1;
+  UpdateVideoStatsType type = 2;
+  int64 count = 3;  // 变化数量，可为负数
+  int64 user_id = 4; // 操作用户ID（可选）
+}
+
+// 视频统计更新类型
+enum UpdateVideoStatsType {
+  UPDATE_VIDEO_STATS_UNKNOWN = 0;
+  UPDATE_VIDEO_STATS_FAVORITE_COUNT = 1;  // 点赞数
+  UPDATE_VIDEO_STATS_COMMENT_COUNT = 2;   // 评论数
+  UPDATE_VIDEO_STATS_PLAY_COUNT = 3;      // 播放数
+  UPDATE_VIDEO_STATS_SHARE_COUNT = 4;     // 分享数
+}

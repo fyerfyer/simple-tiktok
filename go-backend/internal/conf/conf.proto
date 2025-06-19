@@ -44,8 +44,49 @@ message Data {
     google.protobuf.Duration write_timeout = 6;
     int32 pool_size = 7;
   }
+  message MinIO {
+    string endpoint = 1;
+    string access_key = 2;
+    string secret_key = 3;
+    string bucket_name = 4;
+    string region = 5;
+    bool use_ssl = 6;
+    string base_url = 7;
+  }
+  message Qiniu {
+    string access_key = 1;
+    string secret_key = 2;
+    string bucket_name = 3;
+    string domain = 4;
+    string region = 5;
+    bool use_https = 6;
+  }
+  message Kafka {
+    repeated string brokers = 1;
+    Producer producer = 2;
+    Consumer consumer = 3;
+    
+    message Producer {
+      int32 retry_max = 1;
+      int32 batch_size = 2;
+      int32 linger_ms = 3;
+      string compression_type = 4;
+    }
+    
+    message Consumer {
+      string group_id = 1;
+      bool auto_commit = 2;
+      google.protobuf.Duration session_timeout = 3;
+      int32 fetch_min_bytes = 4;
+      google.protobuf.Duration fetch_max_wait = 5;
+    }
+  }
+  
   Database database = 1;
   Redis redis = 2;
+  MinIO minio = 3;
+  Qiniu qiniu = 4;
+  Kafka kafka = 5;
 }
 
 message JWT {
@@ -61,5 +102,30 @@ message Business {
     int32 password_min_length = 4;
     int32 password_max_length = 5;
   }
+  message Video {
+    int64 max_file_size = 1;
+    int32 max_title_length = 2;
+    int32 default_feed_limit = 3;
+    repeated string supported_formats = 4;
+    int32 cover_quality = 5;
+    int32 cover_width = 6;
+    int32 cover_height = 7;
+  }
+  message Storage {
+    google.protobuf.Duration upload_timeout = 1;
+    google.protobuf.Duration download_timeout = 2;
+    google.protobuf.Duration presigned_url_expire = 3;
+    string default_provider = 4;
+  }
+  message KafkaTopics {
+    string video_upload = 1;
+    string video_process = 2;
+    string video_stats = 3;
+    string user_action = 4;
+  }
+  
   User user = 1;
+  Video video = 2;
+  Storage storage = 3;
+  KafkaTopics kafka_topics = 4;
 }
